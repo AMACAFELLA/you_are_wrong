@@ -32,3 +32,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+# you_are_wrong
+ You're Wrong is a thread/twitter like app where instead of agreeing on points the aim is to disagree with the original post and whoever gets the most dislikes is awarded "You're the Worst  Medal". This is soley for entertainment purposes only and is not to be considered to take what users say on the app to be serious.
+
