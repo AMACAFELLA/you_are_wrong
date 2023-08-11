@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const opinionSchema = new mongoose.Schema({
-    text: { tyoe: String, required: true },
+    text: { type: String, required: true },
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
