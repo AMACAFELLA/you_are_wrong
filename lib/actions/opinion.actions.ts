@@ -64,3 +64,39 @@ export async function fetchPosts(pageNumber = 1, pageSize = 20){
 
     return { posts, isNext }
 }
+
+export async function fetchOpinionById(id: string) {
+    connectToDB();
+
+    try{
+        const opinion = await Opinion.findById(id)
+            .populate({
+                path: 'author',
+                model: User,
+                select: "_id id name image"
+            })
+            .populate({
+                path: 'children',
+                populate: [
+                    {
+                        path: 'author',
+                        model: User,
+                        select: "_id id name parentId image"
+                    },
+                    {
+                        path: 'children',
+                        model: Opinion,
+                        populate: {
+                            path: 'author',
+                            model: User,
+                            select: "_id id name parentId image"
+                        }
+                    }
+                ]
+            }).exec();
+
+            return opinion;
+    } catch (error: any) {
+        throw new Error(`Error fetching opinion: ${error.message}`)
+    }
+}

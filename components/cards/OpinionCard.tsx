@@ -34,6 +34,7 @@ const OpinionCard = ({
     community,
     createdAt,
     disagreements,
+    isDisagreement,
 }: Props) => {
    return (
     <article className="flex w-full flex-col rounded-x1 bg-dark-2 p-7">
@@ -72,7 +73,13 @@ const OpinionCard = ({
                             height={24} className="cursor-pointer object-contain" />
                         </div>
 
-                        
+                        {isDisagreement && disagreements.length > 0 && (
+                            <Link href={`/thread/${id}`}>
+                                <p className="mt-1 text-subtle-medium text-gray-1">
+                                    {disagreements.length} disagreements
+                                </p>
+                            </Link>
+                        )} 
                     </div>
                 </div>
             </div>
