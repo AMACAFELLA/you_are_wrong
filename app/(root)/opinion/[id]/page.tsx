@@ -1,4 +1,5 @@
 import OpinionCard from "@/components/cards/OpinionCard";
+import Disagreement from "@/components/forms/Disagreement";
 import { fetchOpinionById } from "@/lib/actions/opinion.actions";
 import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
@@ -17,20 +18,26 @@ const Page = async ({ params }: { params: {id: string }}) => {
 
     return (
         <section className="relative">
-        <div>
-            <OpinionCard
-                key={opinion._id}
-                id={opinion._id}
-                currentUserId={user?.id || ""}
-                parentId={opinion.parentId}
-                content={opinion.text}
-                author={opinion.author}
-                community={opinion.community}
-                createdAt={opinion.createdAt}
-                disagreements={opinion.children}
-            />
-        </div>
-    </section>
+            <div>
+                <OpinionCard
+                    key={opinion._id}
+                    id={opinion._id}
+                    currentUserId={user?.id || ""}
+                    parentId={opinion.parentId}
+                    content={opinion.text}
+                    author={opinion.author}
+                    community={opinion.community}
+                    createdAt={opinion.createdAt}
+                    disagreements={opinion.children}
+                />
+            </div>
+
+            <div className="mt-7">
+                <Disagreement 
+                                  
+                />
+            </div>
+        </section>
     )
 }
 
