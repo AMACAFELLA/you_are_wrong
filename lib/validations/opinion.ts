@@ -7,5 +7,4 @@ export const OpinionValidation = z.object({
 
 export const DisagreementValidation = z.object({
     opinion: z.string().nonempty().min(10, {message: 'Minimun 10 characters'}),
-    accountId: z.string(),
 })

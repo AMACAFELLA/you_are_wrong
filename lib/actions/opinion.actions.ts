@@ -100,3 +100,41 @@ export async function fetchOpinionById(id: string) {
         throw new Error(`Error fetching opinion: ${error.message}`)
     }
 }
+
+export async function addDisagreementToThread(
+    opinionId: string,
+    disagreementText: string,
+    userId: string,
+    path: string,
+) {
+    connectToDB
+
+    try{
+        // Find orginal opinion by ID
+        const originalOpinion = await Opinion.findById(opinionId);
+
+        if(!originalOpinion) {
+            throw new Error("Opinion not found")
+        }
+
+        //Create a new opinion wit the disagreement text
+        const disagreementOpinion = new Opinion({
+            text: disagreementText,
+            author: userId,
+            parentId: opinionId,
+        })
+
+        //Save the new opinion
+        const savedDisagreementOpinion = await disagreementOpinion.save();
+
+        //Update the original opinion ti include the new disagreement
+        originalOpinion.children.push(savedDisagreementOpinion._id);
+
+        //Save the original opinion
+        await originalOpinion.save();
+        
+    } catch(error: any) {
+        throw new Error(`Error adding comment to thread: ${error.message}`)
+    }
+
+}
