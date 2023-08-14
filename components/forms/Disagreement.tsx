@@ -57,7 +57,7 @@ const Disagreement = ({ opinionId, currentUserImg, currentUserId}: Props ) => {
                         <FormItem className='flex w-full items-center gap-3'>
                             <FormLabel>
                                 <Image
-                                  src={currentUserId}
+                                  src={currentUserImg}
                                   alt="Profile image"
                                   width={48}
                                   height={48}
@@ -67,7 +67,7 @@ const Disagreement = ({ opinionId, currentUserImg, currentUserId}: Props ) => {
                             <FormControl className="border-none bg-transparent">
                                 <Input
                                     type="text"
-                                    placeholder="State your disagreement"
+                                    placeholder="disagreement"
                                     className="no-fucs text-light-1 outline-none"
                                     {...field}
                                 />
