@@ -35,10 +35,27 @@ const Page = async ({ params }: { params: {id: string }}) => {
             <div className="mt-7">
                 <Disagreement
                     opinionId={opinion.id}
-                    currentUserImg={user.imageUrl}
+                    currentUserImg={userInfo.image}
                     currentUserId={JSON.stringify(userInfo._id)}
                                   
                 />
+            </div>
+
+            <div className="mt-10">
+                {opinion.children.map((childItem: any) => (
+                    <OpinionCard
+                        key={opinion._id}
+                        id={childItem._id}
+                        currentUserId={childItem?.id || ""}
+                        parentId={childItem.parentId}
+                        content={childItem.text}
+                        author={childItem.author}
+                        community={childItem.community}
+                        createdAt={childItem.createdAt}
+                        disagreements={childItem.children}
+                        isDisagreement
+                    />
+                ))}
             </div>
         </section>
     )
