@@ -47,7 +47,7 @@ const Disagreement = ({ opinionId, currentUserImg, currentUserId}: Props ) => {
     return (
         <Form {...form}>
             <form
-                className='disagreement-form'
+                className='comment-form'
                 onSubmit={form.handleSubmit(onSubmit)}
             >
                 <FormField
