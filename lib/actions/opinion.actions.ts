@@ -134,7 +134,7 @@ export async function addDisagreementToThread(
         await originalOpinion.save();
         
     } catch(error: any) {
-        throw new Error(`Error adding comment to thread: ${error.message}`)
+        throw new Error(`Error adding comment to opinion: ${error.message}`)
     }
 
 }

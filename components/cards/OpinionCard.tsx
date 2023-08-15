@@ -74,7 +74,7 @@ const OpinionCard = ({
                         </div>
 
                         {isDisagreement && disagreements.length > 0 && (
-                            <Link href={`/thread/${id}`}>
+                            <Link href={`/opinion/${id}`}>
                                 <p className="mt-1 text-subtle-medium text-gray-1">
                                     {disagreements.length} disagreements
                                 </p>

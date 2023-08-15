@@ -34,10 +34,10 @@ export function formatDateString(dateString: string) {
 // created by chatgpt
 export function formatThreadCount(count: number): string {
   if (count === 0) {
-    return "No Threads";
+    return "No Opinions";
   } else {
-    const threadCount = count.toString().padStart(2, "0");
-    const threadWord = count === 1 ? "Thread" : "Threads";
-    return `${threadCount} ${threadWord}`;
+    const opinionCount = count.toString().padStart(2, "0");
+    const opinionWord = count === 1 ? "Opinion" : "Opinions";
+    return `${opinionCount} ${opinionWord}`;
   }
 }
