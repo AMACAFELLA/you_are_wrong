@@ -11,27 +11,31 @@ interface Props {
 const OpinionsTab = async ({ currentUserId, accountId, accountType}: Props) => {
     let result = await fetchUserPosts(accountId);
     
-    if(result) redirect('/')
+    if (!result) {
+        redirect("/");
+    }
     
     return (
         <section className="mt-9 flex-col gap-10">
             {result.opinions.map((opinion: any) => (
-                <OpinionCard
-                    key={opinion._id}
+                <OpinionCard key={opinion._id}
                     id={opinion._id}
                     currentUserId={currentUserId}
                     parentId={opinion.parentId}
                     content={opinion.text}
                     author={
-                        accountType === 'User'
-                        ? { name: result.name, image: result.image, id: result.id}
-                        : { name: opinion.author.name, image: opinion.author.image,
-                        id: opinion.author.id }
+                        accountType === "User"
+                            ? { name: result.name, image: result.image, id: result.id }
+                            : {
+                                name: opinion.author.name,
+                                image: opinion.author.image,
+                                id: opinion.author.id,
+                            }
                     }
                     community={opinion.community}
                     createdAt={opinion.createdAt}
                     disagreements={opinion.children}
-                />
+               /> 
             ))}
         </section>
     )
