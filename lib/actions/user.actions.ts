@@ -138,3 +138,31 @@ export async function fetchUsers({
         throw new Error(`Failed to fetch users: ${error.message}`)
     }
 }
+
+export async function getActivity(userId: string) {
+    try{
+        connectToDB();
+
+        //find all opinions crated by the user
+        const userOpinions = await Opinion.find({ author: userId});
+
+        // collect all the child opinion ids (disagreements) from the children field
+
+        const childOpinionIds = userOpinions.reduce((acc, userOpinion) => {
+            return acc.concat(userOpinion.children)
+        }, [])
+
+        const replies = await Opinion.find({
+            _id: { $in: childOpinionIds},
+            author: { $ne: userId}
+        }).populate({
+            path: 'author',
+            model: User,
+            select: 'name image _id'
+        })
+
+        return replies;
+    } catch (error: any) {
+        throw new Error(`Failed to fetch activity: ${error.message}`)
+    }
+}
