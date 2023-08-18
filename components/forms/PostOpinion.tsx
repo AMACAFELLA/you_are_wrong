@@ -4,6 +4,7 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useOrganization } from "@clerk/nextjs";
 
 import {
     Form,
@@ -34,6 +35,7 @@ interface Props {
 function PostOpinion({ userId }: { userId: string}) {
     const router = useRouter();
     const pathname = usePathname();
+    const { organization } = useOrganization();
 
     const form = useForm({
         resolver: zodResolver(OpinionValidation),
@@ -47,12 +49,12 @@ function PostOpinion({ userId }: { userId: string}) {
         await postOpinion({
             text: values.opinion,
             author: userId,
-            communityId: null,
-            path: pathname
-        })
+            communityId: organization ? organization.id : null,
+            path: pathname,
+        });
 
-        router.push("/")
-    }
+        router.push("/");
+    };
 
     return (
         <Form {...form}>
