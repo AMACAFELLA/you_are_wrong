@@ -53,9 +53,10 @@ interface Params {
     author: string,
     communityId: string | null,
     path: string,
+    giphyId: string | null,
 }
 
-export async function postOpinion({ text, author, communityId, path }: Params
+export async function postOpinion({ text, author, communityId, path, giphyId }: Params
 ) {
     try {
         connectToDB();
@@ -69,6 +70,7 @@ export async function postOpinion({ text, author, communityId, path }: Params
             text,
             author,
             community: communityIdObject, // Assign communityId if provided, or leave it null for personal account
+            giphyId,
         });
 
         // Update User model
@@ -202,7 +204,7 @@ export async function fetchOpinionById(opinionId: string) {
 
 export async function addDisagreementToOpinion(
     opinionId: string,
-    commentText: string,
+    opinionText: string,
     userId: string,
     path: string
 ) {
@@ -216,9 +218,9 @@ export async function addDisagreementToOpinion(
             throw new Error("Opinion not found");
         }
 
-        // Create the new comment opinion
+        // Create the new opinion
         const disagreementOpinion = new Opinion({
-            text: commentText,
+            text: opinionText,
             author: userId,
             parentId: opinionId, // Set the parentId to the original opinion's ID
         });
@@ -234,7 +236,41 @@ export async function addDisagreementToOpinion(
 
         revalidatePath(path);
     } catch (err) {
-        console.error("Error while adding comment:", err);
-        throw new Error("Unable to add comment");
+        console.error("Error while adding opinion:", err);
+        throw new Error("Unable to add opinion");
     }
+}
+
+export async function repostOpinion(opinionId: string,
+    userId: string) {
+
+    try {
+
+        // Find the opinion
+        let opinion = await Opinion.findById(opinionId);
+
+        // Check if user already reposted
+        if (opinion.reposts.includes(userId)) {
+            // Remove repost
+            opinion.reposts.pull(userId);
+            opinion.repostCount--;
+        } else {
+            // Add repost
+            opinion.reposts.push(userId);
+            opinion.repostCount++;
+        }
+
+        await opinion.save();
+
+        // Update user's reposted opinions
+        await User.updateOne(
+            { _id: userId },
+            { $push: { repostedOpinions: opinionId } }
+        );
+
+    } catch (error) {
+        console.log(error);
+        throw new Error('Error reposting opinion')
+    }
+
 }

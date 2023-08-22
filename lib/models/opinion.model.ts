@@ -11,7 +11,26 @@ const opinionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Community',
     },
-    CreatedAt: {
+    giphyId: {
+        type: String
+    },
+    agreements: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    agreementsCount: {
+        type: Number,
+        default: 0
+    },
+    reposts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    repostCount: {
+        type: Number,
+        default: 0
+    },
+    createdAt: {
         type: Date,
         default: Date.now,
     },
@@ -21,10 +40,10 @@ const opinionSchema = new mongoose.Schema({
     children: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref:'Opinion'
+            ref: 'Opinion'
         }
     ]
-})
+});
 
 const Opinion = mongoose.models.Opinion || mongoose.model('Opinion', opinionSchema);
 

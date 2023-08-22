@@ -29,7 +29,7 @@ async function Page({ params }: { params: { id: string } }) {
             />
 
             <div className='mt-9'>
-                <Tabs defaultValue='Opinions' className='w-full'>
+                <Tabs defaultValue='opinions' className='w-full'>
                     <TabsList className='tab'>
                         {communityTabs.map((tab) => (
                             <TabsTrigger key={tab.label} value={tab.value} className='tab'>
@@ -44,14 +44,14 @@ async function Page({ params }: { params: { id: string } }) {
 
                                 {tab.label === "Opinions" && (
                                     <p className='ml-1 rounded-sm bg-light-4 px-2 py-1 !text-tiny-medium text-light-2'>
-                                        {communityDetails.Opinions.length}
+                                        {communityDetails.opinions.length}
                                     </p>
                                 )}
                             </TabsTrigger>
                         ))}
                     </TabsList>
 
-                    <TabsContent value='Opinions' className='w-full text-light-1'>
+                    <TabsContent value='opinions' className='w-full text-light-1'>
                         {/* @ts-ignore */}
                         <OpinionsTab
                             currentUserId={user.id}

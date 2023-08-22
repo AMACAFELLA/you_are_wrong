@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { formatDateString } from "@/lib/utils";
-// import DeleteThread from "../forms/DeleteThread";
+import DeleteOpinion from "../forms/DeleteOpinion";
+import { repostOpinion } from '@/lib/actions/opinion.actions';
 
 interface Props {
     id: string;
@@ -39,6 +40,7 @@ function OpinionCard({
     disagreements,
     isDisagreement,
 }: Props) {
+    
     return (
         <article
             className={`flex w-full flex-col rounded-xl ${isDisagreement ? "px-0 xs:px-7" : "bg-dark-2 p-7"
@@ -113,13 +115,13 @@ function OpinionCard({
                     </div>
                 </div>
 
-                {/* <DeleteThread
+                <DeleteOpinion
                     opinionId={JSON.stringify(id)}
                     currentUserId={currentUserId}
                     authorId={author.id}
                     parentId={parentId}
-                    isComment={isDisagreement}
-                /> */}
+                    isDisagreement={isDisagreement}
+                />
             </div>
 
             {!isDisagreement && disagreements.length > 0 && (
