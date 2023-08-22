@@ -8,7 +8,7 @@ import { useOrganization } from "@clerk/nextjs";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { IGif } from "@giphy/js-types";
 import { Grid } from "@giphy/react-components";
-import React, { SyntheticEvent, useState } from 'react';
+import React, { SyntheticEvent, useEffect, useState } from 'react';
 
 import {
     Form,
@@ -24,7 +24,9 @@ import { OpinionValidation } from "@/lib/validations/opinion";
 import { postOpinion } from "@/lib/actions/opinion.actions";
 import { updateUser } from "@/lib/actions/user.actions";
 import { Carousel } from '@giphy/react-components';
-import Modal from '@/components/ui/modal';
+import Modal from '@/components/ui/GifButton';
+import GifButton from "@/components/ui/GifButton";
+import GifModal from "../ui/GifModal";
 
 
 const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY || "");
@@ -56,23 +58,27 @@ function PostOpinion({ userId }: { userId: string }) {
 
     const [textareaValue, setTextareaValue] = useState('');
     const [isGifModalOpen, setIsGifModalOpen] = useState(false);
+    const [selectedGif, setSelectedGif] = useState<IGif | null>(null);
 
-    const openGifModal = () => setIsGifModalOpen(true);
-    const closeGifModal = () => setIsGifModalOpen(false);
+    const openGifModal = () => {
+        setIsGifModalOpen(true);
+    };
 
-    const onGifSelect = (gif: any) => {
+    const closeGifModal = () => {
+        setIsGifModalOpen(false);
+    };
+
+    const handleGifSelect = (gif: IGif) => {
         setSelectedGif(gif);
-        setTextareaValue(prev => prev + gif.images.original.url);
+        // Handle inserting the GIF URL into the content
+        // You can modify your existing content state here
         closeGifModal();
     };
 
-
-    const [selectedGif, setSelectedGif] = useState<IGif | null>(null);
-
-    const onGifClick = (gif: IGif, e: SyntheticEvent<HTMLElement, Event>) => {
-        e.preventDefault();
-        setSelectedGif(gif);
-    };
+    useEffect(() => {
+        // This effect runs only on the client
+        // You can perform client-side specific operations here
+    }, []);
 
     const onSubmit = async (values: z.infer<typeof OpinionValidation>) => {
         await postOpinion({
@@ -114,15 +120,10 @@ function PostOpinion({ userId }: { userId: string }) {
                     )}
                 />
 
-                {/* <div>
-                    <label>Giphy GIF</label>
-                    <Grid onGifClick={onGifClick} width={800} fetchGifs={fetchGifs} columns={3} />
-                </div> */}
-                <button onClick={openGifModal}>Add GIF</button>
-                {/* Add the GifModal component */}
-                <Modal isOpen={isGifModalOpen} onClose={closeGifModal}>
-                    <Grid onGifClick={onGifSelect} fetchGifs={fetchGifs} width={800} columns={3} />
-                </Modal>
+                <GifButton onClick={openGifModal} />
+
+                <GifModal isOpen={isGifModalOpen} onClose={closeGifModal} onGifSelect={handleGifSelect} />
+
                 <Button type="submit" className="bg-primary-500">
                     Post Opinion
                 </Button>
