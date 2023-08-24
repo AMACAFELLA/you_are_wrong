@@ -35,6 +35,8 @@ const OpinionsTab = async ({ currentUserId, accountId, accountType}: Props) => {
                     community={opinion.community}
                     createdAt={opinion.createdAt}
                     disagreements={opinion.children}
+                    giphyId={opinion.giphyId}
+                    isAgreed= {opinion.isAgreed}
                /> 
             ))}
         </section>

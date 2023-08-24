@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-
 import { formatDateString } from "@/lib/utils";
 import DeleteOpinion from "../forms/DeleteOpinion";
-import { repostOpinion } from '@/lib/actions/opinion.actions';
+import AgreedOpinions from "../forms/AgreedOpinions";
+//import RepostOpinion from "../forms/RepostOpinion";
 
 interface Props {
     id: string;
@@ -27,6 +27,8 @@ interface Props {
         };
     }[];
     isDisagreement?: boolean;
+    giphyId: string | null;
+    isAgreed: boolean;
 }
 
 function OpinionCard({
@@ -39,8 +41,10 @@ function OpinionCard({
     createdAt,
     disagreements,
     isDisagreement,
+    giphyId,
+    isAgreed,
 }: Props) {
-    
+
     return (
         <article
             className={`flex w-full flex-col rounded-xl ${isDisagreement ? "px-0 xs:px-7" : "bg-dark-2 p-7"
@@ -68,16 +72,22 @@ function OpinionCard({
                             </h4>
                         </Link>
 
-                        <p className='mt-2 text-small-regular text-light-2'>{content}</p>
+                        <p className='mt-2 text-small-regular text-light-2'>
+                            {content}
+                            {giphyId && (
+                                <div className="mt-3">
+                                    <img src={`https://media.giphy.com/media/${giphyId}/giphy.gif`} alt="GIF" />
+                                </div>
+                            )}
+                        </p>
 
                         <div className={`${isDisagreement && "mb-10"} mt-5 flex flex-col gap-3`}>
                             <div className='flex gap-3.5'>
                                 <Image
-                                    src='/assets/heart-gray.svg'
-                                    alt='heart'
+                                    src="/assets/repost.svg" // Replace with repost image
+                                    alt="Repost"
                                     width={24}
                                     height={24}
-                                    className='cursor-pointer object-contain'
                                 />
                                 <Link href={`/opinion/${id}`}>
                                     <Image
@@ -88,13 +98,10 @@ function OpinionCard({
                                         className='cursor-pointer object-contain'
                                     />
                                 </Link>
-                                <Image
-                                    src='/assets/repost.svg'
-                                    alt='heart'
-                                    width={24}
-                                    height={24}
-                                    className='cursor-pointer object-contain'
-                                />
+                                {/* <RepostOpinion
+                                    opinionId={id}
+                                    userId={currentUserId}
+                                /> */}
                                 <Image
                                     src='/assets/share.svg'
                                     alt='heart'

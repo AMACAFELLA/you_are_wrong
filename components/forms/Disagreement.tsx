@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DisagreementValidation } from "@/lib/validations/opinion";
 import Image from "next/image";
-import { addDisagreementToThread } from "@/lib/actions/opinion.actions";
+import { addDisagreementToOpinion } from "@/lib/actions/opinion.actions";
 // import { postOpinion } from "@/lib/actions/opinion.actions";
 // import { updateUser } from "@/lib/actions/user.actions";
 
@@ -39,7 +39,7 @@ const Disagreement = ({ opinionId, currentUserImg, currentUserId}: Props ) => {
     })
 
     const onSubmit = async (values: z.infer<typeof DisagreementValidation>) => {
-        await addDisagreementToThread(opinionId, values.opinion, JSON.parse(currentUserId), pathname);
+        await addDisagreementToOpinion(opinionId, values.opinion, JSON.parse(currentUserId), pathname);
 
         form.reset();
     }

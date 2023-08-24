@@ -16,6 +16,9 @@ const Page = async ({ params }: { params: {id: string }}) => {
 
     const opinion = await fetchOpinionById(params.id)
 
+    const isAgreed = opinion.agrees.includes(user.id); 
+
+
     return (
         <section className="relative">
             <div>
@@ -29,6 +32,8 @@ const Page = async ({ params }: { params: {id: string }}) => {
                     community={opinion.community}
                     createdAt={opinion.createdAt}
                     disagreements={opinion.children}
+                    giphyId={opinion.giphyId}
+                    isAgreed={isAgreed}
                 />
             </div>
 
@@ -54,6 +59,8 @@ const Page = async ({ params }: { params: {id: string }}) => {
                         createdAt={childItem.createdAt}
                         disagreements={childItem.children}
                         isDisagreement
+                        giphyId={opinion.giphyId}
+                        isAgreed= {childItem.isAgreed}
                     />
                 ))}
             </div>

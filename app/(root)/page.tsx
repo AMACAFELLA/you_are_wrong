@@ -24,10 +24,12 @@ export default async function Home() {
                   currentUserId={user?.id || ""}
                   parentId={post.parentId}
                   content={post.text}
+                  giphyId={post.giphyId}
                   author={post.author}
                   community={post.community}
                   createdAt={post.createdAt}
                   disagreements={post.children}
+                  isAgreed= {post.isAgreed}
                 />
               ))
             }

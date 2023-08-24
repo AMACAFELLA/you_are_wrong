@@ -7,8 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useOrganization } from "@clerk/nextjs";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { IGif } from "@giphy/js-types";
-import { Grid } from "@giphy/react-components";
-import React, { SyntheticEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
     Form,
@@ -22,26 +21,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { OpinionValidation } from "@/lib/validations/opinion";
 import { postOpinion } from "@/lib/actions/opinion.actions";
-import { updateUser } from "@/lib/actions/user.actions";
-import { Carousel } from '@giphy/react-components';
-import Modal from '@/components/ui/GifButton';
 import GifButton from "@/components/ui/GifButton";
-import GifModal from "../ui/GifModal";
-
+import GifModal from "@/components/ui/GifModal";
 
 const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY || "");
-
-interface Props {
-    user: {
-        id: string;
-        objectId: string;
-        username: string;
-        name: string;
-        bio: string;
-        image: string;
-    };
-    btnTitle: string;
-}
 
 function PostOpinion({ userId }: { userId: string }) {
     const router = useRouter();
@@ -54,9 +37,8 @@ function PostOpinion({ userId }: { userId: string }) {
             opinion: '',
             accountId: userId,
         },
-    })
+    });
 
-    const [textareaValue, setTextareaValue] = useState('');
     const [isGifModalOpen, setIsGifModalOpen] = useState(false);
     const [selectedGif, setSelectedGif] = useState<IGif | null>(null);
 
@@ -66,13 +48,6 @@ function PostOpinion({ userId }: { userId: string }) {
 
     const closeGifModal = () => {
         setIsGifModalOpen(false);
-    };
-
-    const handleGifSelect = (gif: IGif) => {
-        setSelectedGif(gif);
-        // Handle inserting the GIF URL into the content
-        // You can modify your existing content state here
-        closeGifModal();
     };
 
     useEffect(() => {
@@ -91,8 +66,6 @@ function PostOpinion({ userId }: { userId: string }) {
 
         router.push("/");
     };
-
-    const fetchGifs = (offset: number) => gf.trending({ offset, limit: 10 });
 
     return (
         <Form {...form}>
@@ -122,7 +95,7 @@ function PostOpinion({ userId }: { userId: string }) {
 
                 <GifButton onClick={openGifModal} />
 
-                <GifModal isOpen={isGifModalOpen} onClose={closeGifModal} onGifSelect={handleGifSelect} />
+                <GifModal isOpen={isGifModalOpen} onClose={closeGifModal} onGifSelect={setSelectedGif} />
 
                 <Button type="submit" className="bg-primary-500">
                     Post Opinion

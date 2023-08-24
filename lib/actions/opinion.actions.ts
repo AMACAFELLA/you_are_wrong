@@ -1,12 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isValidObjectId } from 'mongoose';
+import { ObjectId } from 'mongoose';
+// import { ObjectId } from "mongodb";
+
+
+import mongoose from "mongoose"; // Import mongoose
 
 import { connectToDB } from "../mongoose";
 
 import User from "../models/user.model";
 import Opinion from "../models/opinion.model";
 import Community from "../models/community.model";
+
 
 export async function fetchPosts(pageNumber = 1, pageSize = 20) {
     connectToDB();
@@ -241,36 +248,90 @@ export async function addDisagreementToOpinion(
     }
 }
 
-export async function repostOpinion(opinionId: string,
-    userId: string) {
+interface Opinion {
+    agreedBy: string[];
+}
+
+const opinion: Opinion = {
+    // ...
+    agreedBy: []
+}
+
+
+export async function agreeToOpinion(opinionId: string, userId: string) {
+    
+    if (!mongoose.Types.ObjectId.isValid(opinionId)) {
+        throw new Error("Invalid opinionId - not a valid MongoDB ID");
+    }
+
+    let opinion;
+
+    try {
+        connectToDB();
+
+        opinion = await Opinion.findById(opinionId);
+
+        if (!opinion) {
+            throw new Error("Opinion not found");
+        }
+
+        if (!opinion.agrees) {
+            opinion.agrees = [];
+        }
+
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+        const isUserAgreed = opinion.agrees.includes(userIdObj);
+
+        if (isUserAgreed) {
+            opinion.agrees.pull(userIdObj);
+            opinion.agreeCount--;
+        } else {
+            opinion.agrees.push(userIdObj);
+            opinion.agreeCount++;
+        }
+
+        await opinion.save();
+    } catch (error: any) {
+        console.error(error);
+        throw new Error(`Error while agreeing to opinion: ${error.message}`);
+    }
+}
+
+export async function repostOpinion(
+    opinionId: string,
+    userId: string,
+) {
 
     try {
 
-        // Find the opinion
-        let opinion = await Opinion.findById(opinionId);
+        const opinion = await Opinion.findById(opinionId);
 
-        // Check if user already reposted
-        if (opinion.reposts.includes(userId)) {
-            // Remove repost
-            opinion.reposts.pull(userId);
-            opinion.repostCount--;
+        const isReposted = opinion.repostedBy
+            .some((id: mongoose.Types.ObjectId) => id.equals(userId));
+
+        if (isReposted) {
+
+            const stringId = userId.toString()
+
+            opinion.repostedBy = opinion.repostedBy
+                .map((id: mongoose.Types.ObjectId) => id.toString())
+                .filter((id: string) => id !== stringId)
+
+            opinion.repostCount--
+
         } else {
-            // Add repost
-            opinion.reposts.push(userId);
-            opinion.repostCount++;
+
+            opinion.repostedBy.push(userId)
+            opinion.repostCount++
+
         }
 
         await opinion.save();
 
-        // Update user's reposted opinions
-        await User.updateOne(
-            { _id: userId },
-            { $push: { repostedOpinions: opinionId } }
-        );
-
-    } catch (error) {
-        console.log(error);
-        throw new Error('Error reposting opinion')
+    } catch (error: any) {
+        // handle error
+        console.error(error);
+        throw new Error(`Error while reposting opinion: ${error.message}`);
     }
 
 }
