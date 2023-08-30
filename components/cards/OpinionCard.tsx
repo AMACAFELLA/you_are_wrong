@@ -5,7 +5,6 @@ import Link from "next/link";
 import { formatDateString } from "../../lib/utils";
 import DeleteOpinion from "../forms/DeleteOpinion";
 import AgreedOpinions from "../forms/AgreedOpinions";
-//import RepostOpinion from "../forms/RepostOpinion";
 
 interface Props {
     id: string;
@@ -100,10 +99,7 @@ function OpinionCard({
                                         className='cursor-pointer object-contain'
                                     />
                                 </Link>
-                                {/* <RepostOpinion
-                                    opinionId={id}
-                                    userId={currentUserId}
-                                /> */}
+                                
                                 <Image
                                     src='/assets/share.svg'
                                     alt='heart'

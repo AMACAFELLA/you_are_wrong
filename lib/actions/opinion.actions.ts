@@ -99,11 +99,11 @@ export async function postOpinion({ text, author, communityId, path, giphyId }: 
 }
 
 async function fetchAllChildOpinions(opinionId: string): Promise<any[]> {
-    const childOpinions = await Opinion.find({ parentId: opinionId });
+    const childOpinions: any[] = await Opinion.find({ parentId: opinionId });
 
-    const descendantOpinions = [];
+    const descendantOpinions: any[] = [];
     for (const childOpinion of childOpinions) {
-        const descendants = await fetchAllChildOpinions(childOpinion._id);
+        const descendants: any[] = await fetchAllChildOpinions(childOpinion._id);
         descendantOpinions.push(childOpinion, ...descendants);
     }
 
@@ -297,41 +297,3 @@ export async function agreeToOpinion(opinionId: string, userId: string) {
     }
 }
 
-export async function repostOpinion(
-    opinionId: string,
-    userId: string,
-) {
-
-    try {
-
-        const opinion = await Opinion.findById(opinionId);
-
-        const isReposted = opinion.repostedBy
-            .some((id: mongoose.Types.ObjectId) => id.equals(userId));
-
-        if (isReposted) {
-
-            const stringId = userId.toString()
-
-            opinion.repostedBy = opinion.repostedBy
-                .map((id: mongoose.Types.ObjectId) => id.toString())
-                .filter((id: string) => id !== stringId)
-
-            opinion.repostCount--
-
-        } else {
-
-            opinion.repostedBy.push(userId)
-            opinion.repostCount++
-
-        }
-
-        await opinion.save();
-
-    } catch (error: any) {
-        // handle error
-        console.error(error);
-        throw new Error(`Error while reposting opinion: ${error.message}`);
-    }
-
-}

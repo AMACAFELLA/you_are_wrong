@@ -14,17 +14,6 @@ const opinionSchema = new mongoose.Schema({
     giphyId: {
         type: String
     },
-    repostCount: {
-        type: Number,
-        default: 0
-    },
-
-    repostedBy: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
-    ],
     createdAt: {
         type: Date,
         default: Date.now,
