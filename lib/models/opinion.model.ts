@@ -27,14 +27,13 @@ const opinionSchema = new mongoose.Schema({
             ref: 'Opinion'
         }
     ],
-    agrees: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }],
-    agreeCount: {
-        type: Number,
-        default: 0
-    },
+    userAgrees: [
+        {
+            //type: String
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ],
 
 });
 

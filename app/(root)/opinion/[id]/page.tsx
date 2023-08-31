@@ -15,10 +15,7 @@ const Page = async ({ params }: { params: {id: string }}) => {
     if(!userInfo?.onboarded) redirect('/onboarding')
 
     const opinion = await fetchOpinionById(params.id)
-
-    const isAgreed = opinion.agrees.includes(user.id); 
-
-
+    
     return (
         <section className="relative">
             <div>
@@ -26,6 +23,7 @@ const Page = async ({ params }: { params: {id: string }}) => {
                     key={opinion._id}
                     id={opinion._id}
                     currentUserId={user?.id || ""}
+                    currentUserInfoID={JSON.stringify(userInfo._id)}
                     parentId={opinion.parentId}
                     content={opinion.text}
                     author={opinion.author}
@@ -33,7 +31,7 @@ const Page = async ({ params }: { params: {id: string }}) => {
                     createdAt={opinion.createdAt}
                     disagreements={opinion.children}
                     giphyId={opinion.giphyId}
-                    isAgreed={isAgreed}
+                    agrees={opinion.userAgrees}
                 />
             </div>
 
@@ -52,6 +50,7 @@ const Page = async ({ params }: { params: {id: string }}) => {
                         key={opinion._id}
                         id={childItem._id}
                         currentUserId={childItem?.id || ""}
+                        currentUserInfoID={JSON.stringify(userInfo._id)}
                         parentId={childItem.parentId}
                         content={childItem.text}
                         author={childItem.author}
@@ -60,7 +59,7 @@ const Page = async ({ params }: { params: {id: string }}) => {
                         disagreements={childItem.children}
                         isDisagreement
                         giphyId={opinion.giphyId}
-                        isAgreed= {childItem.isAgreed}
+                        agrees={opinion.userAgrees}
                     />
                 ))}
             </div>

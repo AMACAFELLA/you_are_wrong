@@ -297,3 +297,28 @@ export async function agreeToOpinion(opinionId: string, userId: string) {
     }
 }
 
+export async function addUserAgree(opinionId: string, userId: string, path: string): Promise<void> {
+    try {
+        connectToDB();
+
+        // Find the opinion to add the user Agreed too
+        const opinion = await Opinion.findById(opinionId);
+        //const user = await User.findById(userId);
+
+        // If the user has not agreed it before, add it
+        if (opinion.userAgrees.includes(userId) === false) {
+            opinion.userAgrees.push(userId);
+        } else { // Remove the agreement
+            opinion.userAgrees.remove(userId);
+        }
+
+        // Save the updated thread to the database
+        await opinion.save();
+
+        // Revalidate the Path to show changes immediately
+        revalidatePath(path);
+    }
+    catch (error: any) {
+        console.error("Error while adding user agreement: ", error);
+    }
+}

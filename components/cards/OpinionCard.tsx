@@ -9,6 +9,7 @@ import AgreedOpinions from "../forms/AgreedOpinions";
 interface Props {
     id: string;
     currentUserId: string;
+    currentUserInfoID: string;
     parentId: string | null;
     content: string;
     author: {
@@ -29,12 +30,17 @@ interface Props {
     }[];
     isDisagreement?: boolean;
     giphyId: string | null;
-    isAgreed: boolean;
+    agrees: {
+        user: {
+            id: string;
+        }
+    }[];
 }
 
 function OpinionCard({
     id,
     currentUserId,
+    currentUserInfoID,
     parentId,
     content,
     author,
@@ -43,7 +49,7 @@ function OpinionCard({
     disagreements,
     isDisagreement,
     giphyId,
-    isAgreed,
+    agrees,
 }: Props) {
 
     return (
@@ -84,16 +90,16 @@ function OpinionCard({
 
                         <div className={`${isDisagreement && "mb-10"} mt-5 flex flex-col gap-3`}>
                             <div className='flex gap-3.5'>
-                                <Image
-                                    src="/assets/repost.svg" // Replace with repost image
-                                    alt="Repost"
-                                    width={24}
-                                    height={24}
-                                />
+                                {agrees && agrees.includes(JSON.parse(currentUserInfoID)) ? (
+                                    <AgreedOpinions opinionId={JSON.parse(JSON.stringify(id))} currentUserId={currentUserInfoID} imageSource="/assets/heart-filled.svg" />
+                                ) : (
+                                        <AgreedOpinions opinionId={JSON.parse(JSON.stringify(id))} currentUserId={currentUserInfoID} imageSource="/assets/heart-gray.svg" />
+                                )
+                                }
                                 <Link href={`/opinion/${id}`}>
                                     <Image
                                         src='/assets/reply.svg'
-                                        alt='heart'
+                                        alt='reply'
                                         width={24}
                                         height={24}
                                         className='cursor-pointer object-contain'
@@ -102,17 +108,20 @@ function OpinionCard({
                                 
                                 <Image
                                     src='/assets/share.svg'
-                                    alt='heart'
+                                    alt='share'
                                     width={24}
                                     height={24}
                                     className='cursor-pointer object-contain'
                                 />
                             </div>
-
+                            {/* Shows link with text for # of disagreements and agreements */}
+                            <Link href={`/opinion/${id}`}>
+                                <p className="mt-1 text-subtle-medium text-gray-1">{disagreements.length} disagreements - {agrees && (agrees.length)} agreements</p>
+                            </Link>
                             {isDisagreement && disagreements.length > 0 && (
                                 <Link href={`/opinion/${id}`}>
                                     <p className='mt-1 text-subtle-medium text-gray-1'>
-                                        {disagreements.length} repl{disagreements.length > 1 ? "ies" : "y"}
+                                        {disagreements.length} repl{disagreements.length > 1 ? "ies" : "y"} - {agrees && (agrees.length)} agreements
                                     </p>
                                 </Link>
                             )}
