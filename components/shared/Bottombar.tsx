@@ -1,4 +1,3 @@
-import { sidebarLinks } from "@/constants";
 import SidebarLinks from "./SidebarLinks";
 
 const BottomBar = () => {

@@ -1,6 +1,6 @@
 import React from "react";
 import "../globals.css";
-import TopBar from "@/components/shared/TopBar";
+// import TopBar from "@/components/shared/TopBar";
 export const metadata = {
   title: "You're Wrong",
   description: "Respectful disagreements",
