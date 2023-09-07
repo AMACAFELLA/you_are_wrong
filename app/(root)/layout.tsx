@@ -2,10 +2,10 @@ import { ClerkProvider } from "@clerk/nextjs/app-beta";
 import "../globals.css";
 import type { Metadata } from "next";
 // import { Inter } from "next/font/google";
-import TopBar from "@/components/shared/TopBar";
+import TopBar from "../../components/shared/TopBar"
 import LeftSidebar from "@/components/shared/LeftSidebar";
 import RightSidebar from "@/components/shared/RightSidebar";
-import BottomBar from "@/components/shared/BottomBar";
+import BottomBar from "../../components/shared/BottomBar";
 // import { ThemeProvider } from "@/components/theme/theme.-provider";
 import JumpTopButton from "@/components/shared/JumpTopButton";
 
