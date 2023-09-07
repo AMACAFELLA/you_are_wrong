@@ -13,13 +13,13 @@ import JumpTopButton from "@/components/shared/JumpTopButton";
 
 export const metadata: Metadata = {
   title: "You're Wrong",
-  description: "Respectful disagreement",
+  description: "A social network application for respectful disagreements",
   creator: "Angus Macapella",
   applicationName: "You're Wrong",
   metadataBase:
     process.env.NODE_ENV === "development"
       ? new URL("http://localhost:3000")
-      : new URL("https://you-are-wrong.vercel.app/"),
+      : new URL("https://you-are-wrong.vercel.app"),
 };
 
 export default async function RootLayout({
