@@ -16,20 +16,20 @@ export async function generateMetadata(
   if (userInfo && userInfo.onboarded) return {};
 
   return {
-    title: `Onboarding of (@${userInfo?.username}) on You're Wrong`,
-    description: userInfo?.bio,
-    icons: userInfo?.profileImage, // Make sure the URL is absolute
+    title: `Onboarding of (@${userInfo.username}) on You're Wrong`,
+    description: userInfo.bio,
+    icons: userInfo.profileImage,
     openGraph: {
       type: "website",
-      url: `${host}profile/${userInfo?.id}`,
-      title: `Onboarding of (@${userInfo?.username}) on You're Wrong`,
-      description: userInfo?.bio,
+      url: `${host}profile/${userInfo.id}`,
+      title: `Onboarding of (@${userInfo.username}) on You're Wrong`,
+      description: userInfo.bio,
       images: [
         {
-          url: userInfo?.image, // Make sure the URL is absolute
+          url: userInfo.image,
           width: 200,
           height: 200,
-          alt: `Profile picture of ${userInfo?.username}`,
+          alt: `Profile picture of ${userInfo.username}`,
         },
       ],
       siteName: "You're Wrong",
