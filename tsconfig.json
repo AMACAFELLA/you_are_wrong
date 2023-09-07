@@ -20,7 +20,15 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ],
+      "@/*.ts": [
+        "./*.ts"
+      ],
+      "@/*.tsx": [
+        "./*.tsx"
+      ]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/types/app/(auth)/sign-up/page.ts", ".next/types/app/(auth)/sign-in/page.tsx"],
