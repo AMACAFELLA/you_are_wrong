@@ -1,130 +1,249 @@
-"use server";
+"use server"
 
 import { revalidatePath } from "next/cache";
-import { isValidObjectId } from 'mongoose';
-import { ObjectId } from 'mongoose';
-// import { ObjectId } from "mongodb";
-
-
-import mongoose from "mongoose"; // Import mongoose
-
-import { connectToDB } from "../mongoose";
-
-import User from "../models/user.model";
+import { connectToDb } from "../db/mongoose"
 import Opinion from "../models/opinion.model";
-import Community from "../models/community.model";
+import User from "../models/user.model";
+import { SortOrder, Types } from "mongoose";
+import Vote from "../models/vote.model";
+import { handleVotesCount, replaceMentions } from "./_helper.actions";
+import { fetchFollowings } from "./follow.action";
+
+const createOpinion = async ({ text, author, communityId, path, repost }: PropsType) => {
+    try {
+        await connectToDb();
+        // create opinion model
+        if (!repost)
+            text = await replaceMentions(text)
+        const newOpinion = await Opinion.create({
+            text,
+            author,
+            community: null,
+            repost: repost
+        })
+        // update user model
+        await User.findByIdAndUpdate(author, {
+            $push: { opinions: newOpinion._id }
+        })
+
+        revalidatePath(path)
+        return true
+    } catch (e: any) {
+        throw new Error("Create Opinion Failed " + e.message)
+    }
+}
+
+const repostOpinion = async ({ opinionId, userId, pathname }: { opinionId: string, userId: string, pathname: string }) => {
+    try {
+        const targetOpinion = await Opinion.findOne({ _id: opinionId })
+        if (targetOpinion) {
+
+            return await createOpinion({
+                text: targetOpinion.text,
+                author: userId,
+                communityId: null,
+                path: pathname,
+                repost: opinionId,
+            });
+        }
+        else {
+            throw new Error(`Opinion ${opinionId} not found`)
+        }
+    } catch (e: any) {
+        throw new Error("Repsot failed " + e.message)
+    }
+}
 
 
-export async function fetchPosts(pageNumber = 1, pageSize = 20) {
-    connectToDB();
+const fetchOpinionsByQuery = async ({ pageNumber = 1, pageSize = 30, currentUserId, accountId, label, sortBy = "createdAt" }: PaginatePropsTypeByQuery) => {
+    const skipAmount = (pageNumber - 1) * pageSize
+    // fetch opinions that have no parent
+    // console.log(accountId)
+    let baseQuery = {};
+    if (accountId) {
+        if (typeof accountId === "object") {
+            baseQuery = { author: { $in: accountId }, parentId: { $in: [null, undefined] } }
+        }
+        else {
+            if (label === "opinions")
+                baseQuery = { author: { $in: [accountId] }, parentId: { $in: [null, undefined] } }
+            else if (label === "replies") {
+                baseQuery = { author: { $in: [accountId] }, parentId: { $nin: [null, undefined] } }
+            }
+            else if (label === "mentioned") {
+                const account = (await User.findOne({ _id: accountId }, { username: 1, id: 1 }))
+                if (!account) return { result: false, message: "Account not found", status: 404 }
+                const regex = RegExp(`/${account.id}">`, 'i')  // only username matches having a tag around
+                baseQuery = { text: { $regex: regex } }
+            }
+        }
+    } else {
+        baseQuery = { parentId: { $in: [null, undefined] } }
+    }
+    const sort: string | { [key: string]: SortOrder | { $meta: any; }; } | [string, SortOrder][] | null | undefined = {}
 
-    // Calculate the number of posts to skip based on the page number and page size.
-    const skipAmount = (pageNumber - 1) * pageSize;
+    sort[sortBy] = "desc"
+    if (sortBy === "createdAt")
+        sort["votePoints"] = "desc"
+    else
+        sort["createdAt"] = "desc"
 
-    // Create a query to fetch the posts that have no parent (top-level opinions) (a opinion that is not a comment/reply).
-    const postsQuery = Opinion.find({ parentId: { $in: [null, undefined] } })
-        .sort({ createdAt: "desc" })
+    const opinionsQuery = Opinion.find(baseQuery).sort(sort)
         .skip(skipAmount)
         .limit(pageSize)
         .populate({
-            path: "author",
-            model: User,
-        })
-        .populate({
-            path: "community",
-            model: Community,
-        })
-        .populate({
-            path: "children", // Populate the children field
+            path: "repost",
+            model: Opinion,
             populate: {
-                path: "author", // Populate the author field within children
+                path: "author",
+                model: User
+            }
+        })
+        .populate({
+            path: "author",
+            model: User
+        }).populate({
+            path: "children",
+            populate: [{
+                path: "author",
                 model: User,
-                select: "_id name parentId image", // Select only _id and username fields of the author
-            },
-        });
+                select: "_id username name parentId image createdAt followersCount followingsCount color"
+            }],
 
-    // Count the total number of top-level posts (opinions) i.e., opinions that are not comments.
-    const totalPostsCount = await Opinion.countDocuments({
-        parentId: { $in: [null, undefined] },
-    }); // Get the total count of posts
+        })
+    if (label === "replies") {
+        opinionsQuery.populate({
+            path: "parentId",
+            model: Opinion,
+            select: "_id text createdAt author",
+            populate: {
+                path: "author",
+                model: User,
+                select: "_id id name username image followersCount followingsCount color"
+            }
+        })
+    }
 
-    const posts = await postsQuery.exec();
+    const opinions = await opinionsQuery.exec()
+    let opinionsMyVotesQuery;
+    let opinions_my_votes_only
+    if (currentUserId) {
+        opinionsMyVotesQuery = Opinion.find(baseQuery).sort(sort)
+            .skip(skipAmount)
+            .limit(pageSize).populate({
+                path: "votes",
+                model: Vote,
+                match: { voter: currentUserId },
+                select: "_id type voter opinion",
 
-    const isNext = totalPostsCount > skipAmount + posts.length;
-
-    return { posts, isNext };
-}
-
-interface Params {
-    text: string,
-    author: string,
-    communityId: string | null,
-    path: string,
-    giphyId: string | null,
-}
-
-export async function postOpinion({ text, author, communityId, path, giphyId }: Params
-) {
-    try {
-        connectToDB();
-
-        const communityIdObject = await Community.findOne(
-            { id: communityId },
-            { _id: 1 }
-        );
-
-        const createdOpinion = await Opinion.create({
-            text,
-            author,
-            community: communityIdObject, // Assign communityId if provided, or leave it null for personal account
-            giphyId,
-        });
-
-        // Update User model
-        await User.findByIdAndUpdate(author, {
-            $push: { opinions: createdOpinion._id },
-        });
-
-        if (communityIdObject) {
-            // Update Community model
-            await Community.findByIdAndUpdate(communityIdObject, {
-                $push: { opinions: createdOpinion._id },
             });
+        opinions_my_votes_only = await opinionsMyVotesQuery.exec()
+    }
+
+    let opinions_final = handleVotesCount(opinions, opinions_my_votes_only)
+
+
+    // console.log(opinions_final)
+    const totalOpinionsCount = await Opinion.countDocuments(baseQuery)
+
+    // self votes
+    const hasNext = (totalOpinionsCount > skipAmount + opinions.length)
+
+    return {
+        // @ts-ignore
+        docs: opinions_final,
+        hasNext,
+        totalOpinionsCount,
+        pageNumber,
+        pageSize
+    }
+}
+
+const fetchUserTotalOpinionsCount = async ({ accountId, label }: { accountId: string; label: string }) => {
+    let baseQuery = {}
+    if (label === "opinions")
+        baseQuery = { author: { $in: [accountId] }, parentId: { $in: [null, undefined] } }
+    else if (label === "replies") {
+        baseQuery = { author: { $in: [accountId] }, parentId: { $nin: [null, undefined] } }
+    }
+    else if (label === "mentioned") {
+        const account = (await User.findOne({ _id: accountId }, { username: 1, id: 1 }))
+        if (!account) return { result: false, message: "Account not found", status: 404 }
+        const regex = RegExp(`/${account.id}">`, 'i')  // only username matches having a tag around
+        baseQuery = { text: { $regex: regex } }
+    }
+    const totalOpinionsCount = await Opinion.countDocuments(baseQuery)
+    return totalOpinionsCount
+}
+
+const fetchOpinions = async ({ pageNumber = 1, pageSize = 30, currentUserId, sortBy = "createdAt" }: PaginatePropsType) => {
+    try {
+        await connectToDb()
+        // Calculate the number of posts to skip(page we are on)
+        return await fetchOpinionsByQuery({ pageNumber, pageSize, currentUserId, accountId: null, sortBy })
+    }
+    catch (e: any) {
+        console.error("Fetch Opinions Error " + e.message)
+        return null;
+    }
+}
+
+const fetchFollowingsOpinions = async ({ pageNumber = 1, pageSize = 30, currentUserId, sortBy = "createdAt" }: PaginatePropsType) => {
+    try {
+        await connectToDb()
+        // Calculate the number of posts to skip(page we are on)
+        const followings = await fetchFollowings({ accountId: currentUserId, pageNumber: 1, pageSize: 1000 })
+        if (followings && followings.docs) {
+            const followingsIds = followings.docs.reduce((ids, item) => {
+                return ids.concat(item.following._id.toString())
+            }, []) as string[]
+
+            return await fetchOpinionsByQuery({ pageNumber, pageSize, currentUserId, accountId: followingsIds, sortBy })
+        }
+        else {
+            return null
         }
 
-        revalidatePath(path);
-    } catch (error: any) {
-        throw new Error(`Failed to create opinions: ${error.message}`);
+    }
+    catch (e: any) {
+        console.error("Fetch Followings Opinions Error " + e.message)
+        return null;
     }
 }
 
-async function fetchAllChildOpinions(opinionId: string): Promise<any[]> {
-    const childOpinions: any[] = await Opinion.find({ parentId: opinionId });
+const fetchAllChildOpinions = async (opinionId: string): Promise<any[]> => {
+    const childOpinions = await Opinion.find({ parentId: opinionId });
 
-    const descendantOpinions: any[] = [];
+    const descendantOpinions = [];
     for (const childOpinion of childOpinions) {
-        const descendants: any[] = await fetchAllChildOpinions(childOpinion._id);
-        descendantOpinions.push(childOpinion, ...descendants);
+        const descendants = await fetchAllChildOpinions(childOpinion._id);
+        descendantOpinions.push(childOpinions, ...descendants);
     }
-
     return descendantOpinions;
 }
-
-export async function deleteOpinion(id: string, path: string): Promise<void> {
+const deleteOpinion = async (id: string, userId: string, path: string): Promise<void> => {
     try {
-        connectToDB();
+        await connectToDb();
 
-        // Find the opinion to be deleted (the main opinion)
-        const mainOpinion = await Opinion.findById(id).populate("author community");
+        // Find the Opinion to be deleted (the main Opinion)
+        const mainOpinion = await Opinion.findOne({ _id: id, author: userId })
+            .populate("author")
+            .populate({
+                path: "repost",
+                model: Opinion,
+                populate: {
+                    path: "author",
+                    model: User
+                }
+            });
 
         if (!mainOpinion) {
             throw new Error("Opinion not found");
         }
-
-        // Fetch all child opinions and their descendants recursively
+        // Fetch all child Opinion and their descendants recursively
         const descendantOpinions = await fetchAllChildOpinions(id);
 
-        // Get all descendant opinion IDs including the main opinion ID and child opinion IDs
+        // Get all descendant Opinion IDs including the main Opinion ID and child Opinion IDs
         const descendantOpinionIds = [
             id,
             ...descendantOpinions.map((opinion) => opinion._id),
@@ -138,14 +257,7 @@ export async function deleteOpinion(id: string, path: string): Promise<void> {
             ].filter((id) => id !== undefined)
         );
 
-        const uniqueCommunityIds = new Set(
-            [
-                ...descendantOpinions.map((opinion) => opinion.community?._id?.toString()), // Use optional chaining to handle possible undefined values
-                mainOpinion.community?._id?.toString(),
-            ].filter((id) => id !== undefined)
-        );
-
-        // Recursively delete child opinions and their descendants
+        // Recursively delete child Opinion and their descendants
         await Opinion.deleteMany({ _id: { $in: descendantOpinionIds } });
 
         // Update User model
@@ -155,170 +267,168 @@ export async function deleteOpinion(id: string, path: string): Promise<void> {
         );
 
         // Update Community model
-        await Community.updateMany(
-            { _id: { $in: Array.from(uniqueCommunityIds) } },
-            { $pull: { opinions: { $in: descendantOpinionIds } } }
-        );
-
         revalidatePath(path);
     } catch (error: any) {
         throw new Error(`Failed to delete opinion: ${error.message}`);
     }
 }
 
-export async function fetchOpinionById(opinionId: string) {
-    connectToDB();
 
+const fetchOpinionById = async (id: string, currentUserId: string) => {
     try {
-        const opinion = await Opinion.findById(opinionId)
+        await connectToDb()
+        // TODO : populate communities
+        const opinion = await Opinion.findById(id)
+            .populate({
+                path: "repost",
+                model: Opinion,
+                populate: {
+                    path: "author",
+                    model: User
+                }
+            })
             .populate({
                 path: "author",
                 model: User,
-                select: "_id id name image",
-            }) // Populate the author field with _id and username
+                select: "_id id name username image createdAt followersCount followingsCount color"
+            })
             .populate({
-                path: "community",
-                model: Community,
-                select: "_id id name image",
-            }) // Populate the community field with _id and name
-            .populate({
-                path: "children", // Populate the children field
+                path: "children",
                 populate: [
                     {
-                        path: "author", // Populate the author field within children
+                        path: "author",
                         model: User,
-                        select: "_id id name parentId image", // Select only _id and username fields of the author
+                        select: "_id id name parentId username image createdAt followersCount followingsCount color",
                     },
                     {
-                        path: "children", // Populate the children field within children
-                        model: Opinion, // The model of the nested children (assuming it's the same "Opinion" model)
-                        populate: {
-                            path: "author", // Populate the author field within nested children
+                        path: "children",
+                        model: Opinion,
+                        populate: [{
+                            path: "author",
                             model: User,
-                            select: "_id id name parentId image", // Select only _id and username fields of the author
-                        },
+                            select: "_id id name parentId username image createdAt followersCount followingsCount color"
+                        }]
                     },
-                ],
+                ]
+            }).exec()
+        const opinionWithMyVote = await Opinion.findById(id)
+            .populate({
+                path: "repost",
+                model: Opinion,
+                populate: {
+                    path: "author",
+                    model: User
+                }
             })
-            .exec();
+            .populate({
+                path: "author",
+                model: User,
+                select: "_id id name username image createdAt followersCount followingsCount color"
+            })
+            .populate({
+                path: "children",
+                populate: [
+                    {
+                        path: "votes",
+                        model: Vote,
+                        match: { voter: currentUserId },
+                        select: "_id type voter opinion",
 
-        return opinion;
-    } catch (err) {
-        console.error("Error while fetching opinion:", err);
-        throw new Error("Unable to fetch opinion");
+                    }
+                ]
+            }).populate({
+                path: "votes",
+                model: Vote,
+                match: { voter: currentUserId },
+                select: "_id type voter opinion",
+
+            }).exec()
+        let opinions_final = handleVotesCount([opinion], [opinionWithMyVote], true)
+        return opinions_final[0]
+    } catch (e: any) {
+        console.log("Fetch Opinion failed " + e.message)
+        return null
     }
 }
 
-export async function addDisagreementToOpinion(
-    opinionId: string,
-    opinionText: string,
-    userId: string,
-    path: string
-) {
-    connectToDB();
+
+const addDisagreementToOpinion = async (
+    {
+        authorId,
+        text,
+        opinionId,
+        path
+    }: DisagreementType) => {
 
     try {
-        // Find the original opinion by its ID
-        const originalOpinion = await Opinion.findById(opinionId);
+        await connectToDb()
+        //adding Disagreement
+        // find original Opinion by id
+        // console.log(opinionId)
 
-        if (!originalOpinion) {
-            throw new Error("Opinion not found");
-        }
-
-        // Create the new opinion
+        const originalOpinion = await Opinion.findById(opinionId)
+        if (!originalOpinion) throw new Error("Opinion Not Found")
+        text = await replaceMentions(text)
+        // create new Opinion with Disagreement text
         const disagreementOpinion = new Opinion({
-            text: opinionText,
-            author: userId,
-            parentId: opinionId, // Set the parentId to the original opinion's ID
-        });
+            text: text,
+            author: authorId,
+            // parentId: new Types.ObjectId(opinionId),
+            parentId: opinionId
 
-        // Save the comment opinion to the database
-        const savedDisagreementOpinion = await disagreementOpinion.save();
+        })
+        const savedDisagreementOpinion = await disagreementOpinion.save()
 
-        // Add the comment opinion's ID to the original opinion's children array
-        originalOpinion.children.push(savedDisagreementOpinion._id);
-
-        // Save the updated original opinion to the database
-        await originalOpinion.save();
-
-        revalidatePath(path);
-    } catch (err) {
-        console.error("Error while adding opinion:", err);
-        throw new Error("Unable to add opinion");
-    }
-}
-
-interface Opinion {
-    agreedBy: string[];
-}
-
-const opinion: Opinion = {
-    // ...
-    agreedBy: []
-}
-
-
-export async function agreeToOpinion(opinionId: string, userId: string) {
-    
-    if (!mongoose.Types.ObjectId.isValid(opinionId)) {
-        throw new Error("Invalid opinionId - not a valid MongoDB ID");
+        // update original(parent) Opinion to include new Disagreement
+        originalOpinion.children.push(savedDisagreementOpinion._id)
+        await originalOpinion.save()
+        revalidatePath(path)
+    } catch (e: any) {
+        throw new Error("Add Disagreement Failed " + e.message)
     }
 
-    let opinion;
+}
 
+const voteToOpinion = async (userId: string, type: VoteType, opinionId: string) => {
     try {
-        connectToDB();
-
-        opinion = await Opinion.findById(opinionId);
-
-        if (!opinion) {
-            throw new Error("Opinion not found");
+        await connectToDb()
+        // const user = await User.findOne({ id: userId })
+        // console.log(userId, "?", opinionId)
+        if (userId) {
+            const model = await Vote.findOneAndUpdate(
+                { voter: userId, opinion: opinionId },
+                { type: type }, { upsert: true, new: true }
+            )
+            // calculate votePoints
+            const upVotes = await Vote.countDocuments({ opinion: opinionId, type: "up" })
+            const downVotes = await Vote.countDocuments({ opinion: opinionId, type: "down" })
+            const votePoints = upVotes - downVotes
+            // console.log(model)
+            if (type === "") {
+                await Opinion.findOneAndUpdate({ _id: model.opinion }, {
+                    $pull: { votes: model._id }, $set: { votePoints: votePoints }
+                });
+            }
+            else {
+                await Opinion.findOneAndUpdate({ _id: model.opinion }, {
+                    $addToSet: { votes: model._id }, $set: { votePoints: votePoints }
+                });
+            }
         }
-
-        if (!opinion.agrees) {
-            opinion.agrees = [];
-        }
-
-        const userIdObj = new mongoose.Types.ObjectId(userId);
-        const isUserAgreed = opinion.agrees.includes(userIdObj);
-
-        if (isUserAgreed) {
-            opinion.agrees.pull(userIdObj);
-            opinion.agreeCount--;
-        } else {
-            opinion.agrees.push(userIdObj);
-            opinion.agreeCount++;
-        }
-
-        await opinion.save();
-    } catch (error: any) {
-        console.error(error);
-        throw new Error(`Error while agreeing to opinion: ${error.message}`);
+        return true
+    } catch (e: any) {
+        throw new Error("Vote Failed " + e.message)
     }
 }
-
-export async function addUserAgree(opinionId: string, userId: string, path: string): Promise<void> {
-    try {
-        connectToDB();
-
-        // Find the opinion to add the user Agreed too
-        const opinion = await Opinion.findById(opinionId);
-        //const user = await User.findById(userId);
-
-        // If the user has not agreed it before, add it
-        if (opinion.userAgrees.includes(userId) === false) {
-            opinion.userAgrees.push(userId);
-        } else { // Remove the agreement
-            opinion.userAgrees.remove(userId);
-        }
-
-        // Save the updated thread to the database
-        await opinion.save();
-
-        // Revalidate the Path to show changes immediately
-        revalidatePath(path);
-    }
-    catch (error: any) {
-        console.error("Error while adding user agreement: ", error);
-    }
+export {
+    createOpinion,
+    repostOpinion,
+    fetchOpinions,
+    fetchFollowingsOpinions,
+    fetchUserTotalOpinionsCount,
+    fetchOpinionById,
+    addDisagreementToOpinion,
+    voteToOpinion,
+    fetchOpinionsByQuery,
+    deleteOpinion
 }

@@ -1,0 +1,1 @@
+type VerifySourceType = "verify-register" | "verify-forgot" 

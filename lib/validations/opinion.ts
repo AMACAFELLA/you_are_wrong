@@ -1,10 +1,12 @@
-import * as z from 'zod';
+import * as z from 'zod'
 
-export const OpinionValidation = z.object({
-    opinion: z.string().nonempty().min(3, { message: 'Minimun 3 characters'}),
-    accountId: z.string(),
+const OpinionValidation = z.object({
+    opinion: z.string().min(4, 'Minimum 4 characters').max(6000, 'Maximum 6000 characters'),
+
 })
 
-export const DisagreementValidation = z.object({
-    opinion: z.string().nonempty().min(10, {message: 'Minimun 10 characters'}),
+const DisagreementValidation = z.object({
+    disagreement: z.string().min(1, 'Minimum 1 characters').max(3000, 'Maximum 3000 characters'),
 })
+
+export { OpinionValidation, DisagreementValidation }

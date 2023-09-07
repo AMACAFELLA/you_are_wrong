@@ -32,7 +32,7 @@ export function formatDateString(dateString: string) {
 }
 
 // created by chatgpt
-export function formatThreadCount(count: number): string {
+export function formatOpinionCount(count: number): string {
   if (count === 0) {
     return "No Opinions";
   } else {

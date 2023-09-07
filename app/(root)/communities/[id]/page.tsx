@@ -4,8 +4,8 @@ import { currentUser } from "@clerk/nextjs";
 import { communityTabs } from "@/constants";
 
 import UserCard from "@/components/cards/UserCard";
-import OpinionsTab from "@/components/shared/OpinionsTab";
-import ProfileHeader from "@/components/shared/ProfileHeader";
+import OpinionsTab from "@/components/profile/OpinionsTab";
+import ProfileHeader from "@/components/profile/ProfileHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { fetchCommunityDetails } from "@/lib/actions/community.actions";
@@ -23,7 +23,7 @@ async function Page({ params }: { params: { id: string } }) {
                 authUserId={user.id}
                 name={communityDetails.name}
                 username={communityDetails.username}
-                imgUrl={communityDetails.image}
+                img={communityDetails.image}
                 bio={communityDetails.bio}
                 type='Community'
             />

@@ -1,73 +1,84 @@
-import { currentUser } from "@clerk/nextjs";
+"use client";
 
+import usePagination from "@/hooks/usePagination";
+import { useAuth } from "@clerk/nextjs";
+import { useEffect, useMemo } from "react";
 import UserCard from "../cards/UserCard";
+import Spinner from "../Spinner";
+import Link from "next/link";
 
-import { fetchCommunities } from "@/lib/actions/community.actions";
-import { fetchUsers } from "@/lib/actions/user.actions";
+const RightSidebar = () => {
+  const { getToken } = useAuth();
+  const searchString = useMemo(() => "", []);
+  const [loading, users] = usePagination({
+    options: {
+      baseUrl: "/api/user/search",
+      postFixQs: `&search=${searchString}&sort=ascending`,
+      pageSize: 10,
+    },
+    initialValues: {
+      initialHasNext: false,
+      initailDocs: null,
+      initialLoading: false,
+      initialPageNumber: 1,
+    },
+    getToken: getToken,
+  });
 
-async function RightSidebar() {
-    const user = await currentUser();
-    if (!user) return null;
+  useEffect(() => {
+    return () => {
+      // cleanups
+    };
+  }, []);
 
-    const suggestedUsers = await fetchUsers({
-        userId: user.id,
-        pageSize: 4,
-    });
+  return (
+    <section className="custom-scrollbar rightsidebar overflow-hidden">
+      <div className="flex flex-1 flex-col justify-start w-72 overflow-hidden">
+        <h3 className="text-heading4-medium text-light-1 w-full text-center mb-8">
+          Suggested Users
+        </h3>
+        <div className="flex flex-col gap-4 justify-center items-center py-1 px-4 rounded-xl overflow-hidden">
+          {
+            // @ts-ignore
+            users && users.length === 0 ? (
+              <p className="no-result">No user found</p>
+            ) : (
+              <>
+                {users && (
+                  <>
+                    {
+                      // @ts-ignore
+                      users.map((person, index) => (
+                        <UserCard
+                          key={person.id + "/" + index}
+                          user={person}
+                          type="suggested"
+                          searchString={searchString}
+                        />
+                      ))
+                    }
+                  </>
+                )}
+              </>
+            )
+          }
+        </div>
 
-    const suggestedCOmmunities = await fetchCommunities({ pageSize: 4 });
-
-    return (
-        <section className='custom-scrollbar rightsidebar'>
-            <div className='flex flex-1 flex-col justify-start'>
-                <h3 className='text-heading4-medium text-light-1'>
-                    Suggested Communities
-                </h3>
-
-                <div className='mt-7 flex w-[350px] flex-col gap-9'>
-                    {suggestedCOmmunities.communities.length > 0 ? (
-                        <>
-                            {suggestedCOmmunities.communities.map((community) => (
-                                <UserCard
-                                    key={community.id}
-                                    id={community.id}
-                                    name={community.name}
-                                    username={community.username}
-                                    imgUrl={community.image}
-                                    personType='Community'
-                                />
-                            ))}
-                        </>
-                    ) : (
-                        <p className='!text-base-regular text-light-3'>
-                            No communities yet
-                        </p>
-                    )}
-                </div>
-            </div>
-
-            <div className='flex flex-1 flex-col justify-start'>
-                <h3 className='text-heading4-medium text-light-1'>Users to Debate With</h3>
-                <div className='mt-7 flex w-[350px] flex-col gap-10'>
-                    {suggestedUsers.users.length > 0 ? (
-                        <>
-                            {suggestedUsers.users.map((person) => (
-                                <UserCard
-                                    key={person.id}
-                                    id={person.id}
-                                    name={person.name}
-                                    username={person.username}
-                                    imgUrl={person.image}
-                                    personType='User'
-                                />
-                            ))}
-                        </>
-                    ) : (
-                        <p className='!text-base-regular text-light-3'>No users yet</p>
-                    )}
-                </div>
-            </div>
-        </section>
-    );
-}
+        {loading && (
+          <div className="w-full my-0 py-0 h-8 mt-5 flex justify-center">
+            <Spinner />
+          </div>
+        )}
+        {!loading && users && (
+          <div className="w-full flex justify-center items-center pt-7">
+            <Link href="/search" className="explore_btn">
+              Explore users
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
 
 export default RightSidebar;

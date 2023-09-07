@@ -1,183 +1,452 @@
-"use server";
+"use server"
 
-import { FilterQuery, SortOrder } from "mongoose";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache"
+import { connectToDb } from "../db/mongoose"
+import User from "../models/user.model"
+import Opinion from "../models/opinion.model"
+import { FilterQuery, SortOrder } from "mongoose"
+import clerkClient from "@clerk/clerk-sdk-node"
+import { fetchOpinionsByQuery, fetchUserTotalOpinionsCount } from "./opinion.actions"
+import Vote from "../models/vote.model"
+import { fetchFollowers, findFollowRecord } from "./follow.action"
+import { redirect } from "next/dist/server/api-utils"
+import { digitalRainbowColors } from "@/constants"
 
-import Community from "../models/community.model";
-import Opinion from "../models/opinion.model";
-import User from "../models/user.model";
+interface ParamsType {
 
-import { connectToDB } from "../mongoose";
-
-export async function fetchUser(userId: string) {
-    try {
-        connectToDB();
-
-        return await User.findOne({ id: userId }).populate({
-            path: "communities",
-            model: Community,
-        });
-    } catch (error: any) {
-        throw new Error(`Failed to fetch user: ${error.message}`);
-    }
-}
-
-interface Params {
     userId: string;
     username: string;
+    email: string;
     name: string;
     bio: string;
     image: string;
     path: string;
+};
+const randomColorKey = (min: number, max: number) => {
+    return Math.floor(Math.random() * max) + min;
 }
 
-export async function updateUser({
+const updateUser = async ({
     userId,
-    bio,
-    name,
-    path,
     username,
+    email,
+    name,
+    bio,
     image,
-}: Params): Promise<void> {
+    path
+}: ParamsType): Promise<void> => {
     try {
-        connectToDB();
+        await connectToDb()
+
+        const new_random_color = digitalRainbowColors[randomColorKey(1, 20)]
 
         await User.findOneAndUpdate(
             { id: userId },
             {
                 username: username.toLowerCase(),
+                email: email,
                 name,
                 bio,
-                image,
-                onboarded: true,
-            },
-            { upsert: true }
+                color: new_random_color,
+                image: image.startsWith("https://img.clerk.com") ? "" : image,
+                onboarded: true
+            }, { upsert: true }
+        )
+        // TODO: update user profile For Clerk as well
+        const params = {
+            username,
+            firstName: name,
+        };
+        // See table below for all supported attributes
+        const clerkUpdatedUser = await clerkClient.users.updateUser(
+            userId,
+            params
         );
-
+        // console.log(clerkUpdatedUser);
         if (path === "/profile/edit") {
-            revalidatePath(path);
+            revalidatePath(path)
         }
-    } catch (error: any) {
-        throw new Error(`Failed to create/update user: ${error.message}`);
+
+    } catch (e: any) {
+        throw new Error(`Failed to create update user ${e.message}`)
     }
 }
 
-export async function fetchUserPosts(userId: string) {
+const fetchUser = async (userId: string): Promise<any> => {
     try {
-        connectToDB();
-
-        // Find all opinions authored by the user with the given userId
-        const opinions = await User.findOne({ id: userId }).populate({
-            path: "opinions",
-            model: Opinion,
-            populate: [
-                {
-                    path: "community",
-                    model: Community,
-                    select: "name id image _id", // Select the "name" and "_id" fields from the "Community" model
-                },
-                {
-                    path: "children",
-                    model: Opinion,
-                    populate: {
-                        path: "author",
-                        model: User,
-                        select: "name image id", // Select the "name" and "_id" fields from the "User" model
-                    },
-                },
-            ],
-        });
-        return opinions;
-    } catch (error) {
-        console.error("Error fetching user opinions:", error);
-        throw error;
+        await connectToDb()
+        return await User
+            .findOne({ id: userId })
+    } catch (e: any) {
+        throw new Error("Failed to fetch user " + e.message)
     }
 }
 
-// Almost similar to Thead (search + pagination) and Community (search + pagination)
-export async function fetchUsers({
-    userId,
+const fetchUserAccount = async (accountId: string, userId: string): Promise<any> => {
+    let userAccount = await fetchUser(accountId)
+    if (!userAccount) return null
+    userAccount = JSON.parse(JSON.stringify(userAccount))
+    const res = await findFollowRecord({ followerId: userId, followingId: userAccount._id })
+    userAccount.follow = res
+    return userAccount
+}
+
+const fetchUserById = async (user_Id: string): Promise<any> => {
+    try {
+        await connectToDb()
+        return await User
+            .findOne({ _id: user_Id })
+    } catch (e: any) {
+        throw new Error("Failed to fetch user " + e.message)
+    }
+}
+const fetchUserOpinions = async ({ pageNumber = 1, pageSize = 30, currentUserId, accountId, label, sortBy }: PaginatePropsTypeByQuery) => {
+    try {
+        await connectToDb()
+        // fetch all Opinion authored by the specific user
+        // TODO: needs paginate like home Opinion
+        // TODO: Populate Community
+        const result = await fetchOpinionsByQuery({ pageNumber, pageSize, currentUserId, accountId, label, sortBy })
+        return result
+    } catch (e: any) {
+        console.log("Failed to fetch user opinions " + e.message)
+        return { result: false, message: "Account not found", status: 404 }
+    }
+}
+
+const fetchUserOpinionsTotal = async ({ accountId, label }: { accountId: string, label: string }) => {
+    try {
+        await connectToDb()
+        // fetch all Opinion authored by the specific user
+        // TODO: needs paginate like home Opinion
+        // TODO: Populate Community
+        const result = await fetchUserTotalOpinionsCount({ accountId, label })
+        return result
+    } catch (e: any) {
+        console.log("Failed to fetch user Opinions " + e.message)
+        return { result: false, message: "Account not found", status: 404 }
+    }
+}
+
+interface SearchUsersType {
+    searchString: string
+    pageNumber: number
+    pageSize: number
+    userId: string | undefined
+    sortBy: SortOrder
+}
+const searchUsers = async ({
     searchString = "",
     pageNumber = 1,
-    pageSize = 20,
-    sortBy = "desc",
-}: {
-    userId: string;
-    searchString?: string;
-    pageNumber?: number;
-    pageSize?: number;
-    sortBy?: SortOrder;
-}) {
+    pageSize = 10,
+    userId,
+    sortBy = "desc" }: SearchUsersType) => {
     try {
-        connectToDB();
+        await connectToDb()
+        // paginate 
 
-        // Calculate the number of users to skip based on the page number and page size.
-        const skipAmount = (pageNumber - 1) * pageSize;
+        const skipAmount = (pageNumber - 1) * pageSize
 
-        // Create a case-insensitive regular expression for the provided search string.
-        const regex = new RegExp(searchString, "i");
+        // regex search
 
-        // Create an initial query object to filter users.
-        const query: FilterQuery<typeof User> = {
-            id: { $ne: userId }, // Exclude the current user from the results.
-        };
+        const regex = new RegExp(searchString, 'i')
 
-        // If the search string is not empty, add the $or operator to match either username or name fields.
-        if (searchString.trim() !== "") {
+        const query: FilterQuery<typeof User> =
+            // later
+            // userId ? 
+            // {
+            //     id: { $ne: userId },
+            // } : 
+            {}
+        if (searchString.trim().length > 0) {
+
             query.$or = [
                 { username: { $regex: regex } },
-                { name: { $regex: regex } },
-            ];
+                { name: { $regex: regex } }
+            ]
         }
 
-        // Define the sort options for the fetched users based on createdAt field and provided sort order.
-        const sortOptions = { createdAt: sortBy };
+        const sortOptions = {
+            followersCount: sortBy
+        }
 
-        const usersQuery = User.find(query)
+        const usersQuery = User.find(query, { _id: 1, id: 1, name: 1, username: 1, image: 1, color: 1 })
             .sort(sortOptions)
             .skip(skipAmount)
-            .limit(pageSize);
+            .limit(pageSize)
 
-        // Count the total number of users that match the search criteria (without pagination).
-        const totalUsersCount = await User.countDocuments(query);
+        const totalUsersCount = await User.countDocuments(query)
 
-        const users = await usersQuery.exec();
+        const users = await usersQuery.exec()
 
-        // Check if there are more users beyond the current page.
-        const isNext = totalUsersCount > skipAmount + users.length;
+        const hasNext = totalUsersCount > skipAmount + users.length
 
-        return { users, isNext };
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        throw error;
+
+        // const x = await RandomDelay(1)
+        const url = `/api/user/search?pageNumber=${pageNumber}&pageSize=${pageSize}&search=${searchString}&sort=${sortBy.toString()}`
+        return { hasNext, docs: users, totalUsersCount, pageSize, pageNumber, url }
+
+    } catch (e: any) {
+        throw new Error("Failed fetch search users " + e.message)
+    }
+}
+const RandomDelay = async (second: number) => {
+    return new Promise((resolve) => {
+
+
+        setTimeout(() => {
+            return resolve(true)
+        }, (Math.random() + 0.3) * second * 1000)
+    })
+}
+const getActivity = async ({ pageNumber = 1, pageSize = 10, currentUserId }: PaginatePropsType) => {
+    try {
+        await connectToDb()
+        if (currentUserId) {
+            // currentUserId = JSON.parse(currentUserId)
+            const user = (await User.findOne({ id: currentUserId }, { _id: 1, name: 1, id: 1, username: 1 }))
+            if (user && user._id) {
+
+                const repliesDoc = await getReplies({ pageNumber, pageSize, currentUserId: user._id })
+                const votesDoc = await getVotes({ pageNumber, pageSize, currentUserId: user._id })
+                const mentionsDoc = await getMentions({ pageNumber, pageSize, currentUserId: user._id })
+                const repostsDoc = await getReposts({ pageNumber, pageSize, currentUserId: user._id })
+                const followsDoc = await fetchFollowers({ pageNumber, pageSize, accountId: user._id })
+
+                const hasNext = repliesDoc.hasNext || votesDoc.hasNext || mentionsDoc.hasNext || repostsDoc.hasNext || followsDoc.hasNext
+                let docs: any = []
+                const mentions = mentionsDoc.mentions.reduce((acc, item) => {
+                    return acc.concat({
+                        type: "mention",
+                        message: "mentioned you here",
+                        subject: item.author,
+                        link: "/opinion/" + item._id,
+                        createdAt: item.createdAt
+                    })
+                }, [])
+                const follows = followsDoc.docs?.reduce((acc, item) => {
+                    return acc.concat({
+                        type: "follow",
+                        message: "followed you",
+                        subject: item.follower,
+                        link: "/profile/" + item.follower.id,
+                        createdAt: item.createdAt
+                    })
+                }, [])
+                const reposts = repostsDoc.reposts.reduce((acc, item) => {
+                    return acc.concat({
+                        type: "repost",
+                        message: "reposted your opinion",
+                        subject: item.author,
+                        link: "/opinion/" + item._id,
+                        createdAt: item.createdAt
+                    })
+                }, [])
+                const replies = repliesDoc.replies.reduce((acc, item) => {
+                    return acc.concat({
+                        type: "reply",
+                        message: "disagreed to your opinion",
+                        subject: item.author,
+                        link: "/opinion/" + item.parentId,
+                        createdAt: item.createdAt
+                    })
+                }, [])
+                const votes = votesDoc.votes.reduce((acc, item) => {
+
+                    return acc.concat({
+                        type: "vote",
+                        message: `${item.type.toString().toLowerCase()}voted your opinion`,
+                        subject: item.voter,
+                        link: "/opinion/" + item.opinion._id,
+                        createdAt: item.createdAt
+                    })
+                }, [])
+                docs = docs.concat(mentions)
+                docs = docs.concat(follows)
+                docs = docs.concat(replies)
+                docs = docs.concat(votes)
+                docs = docs.concat(reposts)
+                const sortedDocs = docs.sort(function (a: any, b: any) {
+                    return b.createdAt - a.createdAt;
+                });
+                return { hasNext, docs: sortedDocs, pageSize, pageNumber };
+            }
+            else {
+                return []
+            }
+        }
+        else {
+            return []
+        }
+
+    } catch (e: any) {
+        throw new Error("Failed to fetch activity " + e.message)
     }
 }
 
-export async function getActivity(userId: string) {
-    try {
-        connectToDB();
+const getVotes = async ({ pageNumber = 1, pageSize = 10, currentUserId }: PaginatePropsType) => {
+    const skipAmount = (pageNumber - 1) * pageSize
+    const userOpinions = await Opinion.find({ author: currentUserId })
+    const opinionsIds = userOpinions.reduce((acc, userOpinion) => {
+        return acc.concat(userOpinion._id);
+    }, []);
+    const baseQuery = { voter: { $ne: currentUserId }, opinion: { $in: opinionsIds } }
 
-        // Find all opinions created by the user
-        const userOpinions = await Opinion.find({ author: userId });
+    const votes = await Vote.find(baseQuery)
+        .populate({
+            path: "voter",
+            model: User,
+            select: "_id id name username image followersCount followingsCount color"
+        })
+        .populate({
+            path: "opinion",
+            model: Opinion,
+            select: "_id text"
+        })
+        .sort({ createdAt: "desc" })
+        .skip(skipAmount)
+        .limit(pageSize)
 
-        // Collect all the child Opinion ids (replies) from the 'children' field of each user opinion
-        const childOpinionIds = userOpinions.reduce((acc, userOpinion) => {
-            return acc.concat(userOpinion.children);
-        }, []);
+    const totalVotes = await Vote.countDocuments(baseQuery)
+    const hasNext = totalVotes > skipAmount + votes.length
+    return { hasNext, votes, totalVotes, pageSize, pageNumber }
+}
+const getMentions = async ({ pageNumber = 1, pageSize = 10, currentUserId }: PaginatePropsType) => {
 
-        // Find and return the child Opinions (replies) excluding the ones created by the same user
-        const replies = await Opinion.find({
-            _id: { $in: childOpinionIds },
-            author: { $ne: userId }, // Exclude opinions authored by the same user
-        }).populate({
+    const skipAmount = (pageNumber - 1) * pageSize
+    const account = (await User.findOne({ _id: currentUserId }, { username: 1, id: 1 }))
+    const regex = RegExp(`/${account.id}">`, 'i')  // only username matches having a tag around
+    const baseQuery = { text: { $regex: regex }, author: { $ne: currentUserId } }
+
+    const mentions = await Opinion.find(baseQuery)
+        .populate({
+            path: "repost",
+            model: Opinion,
+            populate: {
+                path: "author",
+                model: User
+            }
+        })
+        .populate({
             path: "author",
             model: User,
-            select: "name image _id",
-        });
+            select: "_id id name username image followersCount followingsCount color"
+        })
+        .sort({ createdAt: "desc" })
+        .skip(skipAmount)
+        .limit(pageSize)
 
-        return replies;
-    } catch (error) {
-        console.error("Error fetching replies: ", error);
-        throw error;
+    const totalMentions = await Opinion.countDocuments(baseQuery)
+    const hasNext = totalMentions > skipAmount + mentions.length
+    return { hasNext, mentions, totalMentions, pageSize, pageNumber }
+}
+const getReposts = async ({ pageNumber = 1, pageSize = 10, currentUserId }: PaginatePropsType) => {
+    const skipAmount = (pageNumber - 1) * pageSize
+    const userOpinions = await Opinion.find({ author: currentUserId })
+    const userOpinionIds: any = userOpinions.reduce((acc, userOpinion) => {
+        return acc.concat(userOpinion._id);
+    }, []);
+
+    const query = {
+        repost: { $in: userOpinionIds },
+        author: { $ne: currentUserId }
+    }
+    const reposts = await Opinion.find(query).populate({
+        path: "author",
+        model: User,
+        select: "_id id name username image followersCount followingsCount color"
+    })
+        .sort({ createdAt: "desc" })
+        .skip(skipAmount)
+        .limit(pageSize)
+
+    const totalRepostsCount = await Opinion.countDocuments(query)
+
+    const hasNext = totalRepostsCount > skipAmount + reposts.length
+
+    return { hasNext, reposts, totalRepostsCount, pageSize, pageNumber }
+}
+const getReplies = async ({ pageNumber = 1, pageSize = 10, currentUserId }: PaginatePropsType) => {
+    const skipAmount = (pageNumber - 1) * pageSize
+    const userOpinions = await Opinion.find({ author: currentUserId })
+
+    const childOpinionIds: any = userOpinions.reduce((acc, userOpinion) => {
+        return acc.concat(userOpinion.children);
+    }, []);
+    const query = {
+        _id: { $in: childOpinionIds },
+        author: { $ne: currentUserId }
+    }
+    const replies = await Opinion.find(query).populate({
+        path: "author",
+        model: User,
+        select: "_id id name username image followersCount followingsCount color"
+    })
+        .sort({ createdAt: "desc" })
+        .skip(skipAmount)
+        .limit(pageSize)
+
+    const totalRepliesCount = await Opinion.countDocuments(query)
+
+
+    const hasNext = totalRepliesCount > skipAmount + replies.length
+
+    return { hasNext, replies, totalRepliesCount, pageSize, pageNumber }
+}
+const checkUsernameExists = async ({ username, userId }: { username: string, userId?: string }) => {
+    try {
+        await connectToDb();
+        let result = await User.findOne({ username: username }, { _id: 1, email: 1, username: 1 })
+        if (result && userId && result?._id.toString() === userId)
+            return true
+
+        return !result;
+    } catch (e: any) {
+        throw new Error("Check user exists error : " + e.message)
     }
 }
+const checkEmailExists = async ({ email, userId }: { email: string, userId?: string }) => {
+    try {
+        await connectToDb();
+        let result = await User.findOne({ email: email }, { _id: 1, email: 1, username: 1 })
+        if (result && userId && result?._id.toString() === userId)
+            return false
+
+
+        return !result;
+    } catch (e: any) {
+        throw new Error("Check user exists error : " + e.message)
+    }
+}
+
+const autoCompleteUsernames = async ({ input }: { input: string }) => {
+    try {
+        if (input.length < 2) {
+            return JSON.stringify([])
+        }
+        await connectToDb()
+        const regex = RegExp("^" + input, 'i')
+        // await RandomDelay(0.2)
+        return JSON.stringify(await User.find({ username: { $regex: regex } }, { _id: 1, id: 1, username: 1, image: 1, name: 1, color: 1 }))
+    } catch (e: any) {
+        console.error("Check user exists error : " + e.message)
+        return JSON.stringify([])
+
+    }
+}
+
+export {
+    updateUser,
+    fetchUser,
+    fetchUserById,
+    fetchUserOpinions,
+    searchUsers,
+    getActivity,
+    checkUsernameExists,
+    checkEmailExists,
+    autoCompleteUsernames,
+    RandomDelay,
+    fetchUserAccount,
+    fetchUserOpinionsTotal
+}
+

@@ -1,53 +1,47 @@
-import { fetchUser, getActivity } from "@/lib/actions/user.actions";
+"use server";
+import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
-import Image from "next/image";
-import Link from "next/link";
-import { redirect } from 'next/navigation';
+import { redirect } from "next/navigation";
+import React from "react";
+import ActivitiesComponent from "@/components/activity/page";
 
-async function Page() {
-    const user = await currentUser();
+import { Metadata, ResolvingMetadata } from "next";
+export async function generateMetadata(
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // fetch data
+  const parentData = await parent;
+  const host = parentData.metadataBase;
 
-    if (!user) return null;
-
-    const userInfo = await fetchUser(user.id);
-
-    if (!userInfo?.onboarded) redirect('/onboarding');
-
-    //getActivity
-    const activity = await getActivity(userInfo._id);
-
-    return (
-        <section>
-            <h1 className="head-text mb-10">Activity</h1>
-
-            <section className="mt-10 flex flex-col gap-5">
-              {activity.length > 0 ? (
-                <>
-                  {activity.map((activity) => (
-                    <Link key={activity._id} href={`/thread/${activity.parentId}`}>
-                        <article className="activity-card">
-                            <Image
-                              src={activity.author.image}
-                              alt="Profile Picture"
-                              width={20}
-                              height={20}
-                              className="rounded-full object-cover"                         
-                            />
-
-                            <p className="!text-small-regular text-light-1">
-                                <span className="mr-1 text-primary-500">
-                                    {activity.author.name}
-                                </span>{" "}
-                                disagreed to your opinion
-                            </p>
-                        </article>
-                    </Link>
-                  ))}
-                </>
-              ): <p className="!text-base-regular text-light-3">No activity yet</p>}
-            </section>
-        </section>
-    )
+  return {
+    title: `Activity in You're Wrong`, //   name
+    description: "Activity page of You're Wrong",
+    openGraph: {
+      type: "website",
+      url: `${host}activity`, // Edit to  URL
+      title: `Activity in You're Wrong`,
+      description: "Activity page of You're Wrong",
+      siteName: "You're Wrong", //  app name
+    },
+  };
 }
+
+const Page = async () => {
+  const user = await currentUser();
+
+  if (!user) return null;
+
+  const userInfo = await fetchUser(user.id);
+  if (!userInfo?.onboarded) return redirect("/onboarding");
+
+  return (
+    <section>
+      <h1 className="head-text mb-10">Activity</h1>
+      <section className="mt-10 flex flex-col gap-5">
+        <ActivitiesComponent />
+      </section>
+    </section>
+  );
+};
 
 export default Page;

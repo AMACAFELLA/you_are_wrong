@@ -1,0 +1,1 @@
+type SortByType = "votePoints" | "createdAt"

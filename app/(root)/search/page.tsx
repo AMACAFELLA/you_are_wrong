@@ -1,62 +1,44 @@
-import { redirect } from "next/navigation";
+"use server";
+import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import React from "react";
+import SearchResults from "@/components/search/SearchResults";
+import { Metadata, ResolvingMetadata } from "next";
+export async function generateMetadata(
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  // fetch data
+  const parentData = await parent;
+  const host = parentData.metadataBase;
 
-import UserCard from "@/components/cards/UserCard";
-import Searchbar from "@/components/shared/Searchbar";
-import Pagination from "@/components/shared/Pagination";
-
-import { fetchUser, fetchUsers } from "@/lib/actions/user.actions";
-
-async function Page({
-    searchParams,
-}: {
-    searchParams: { [key: string]: string | undefined };
-}) {
-    const user = await currentUser();
-    if (!user) return null;
-
-    const userInfo = await fetchUser(user.id);
-    if (!userInfo?.onboarded) redirect("/onboarding");
-
-    const result = await fetchUsers({
-        userId: user.id,
-        searchString: searchParams.q,
-        pageNumber: searchParams?.page ? +searchParams.page : 1,
-        pageSize: 25,
-    });
-
-    return (
-        <section>
-            <h1 className='head-text mb-10'>Search</h1>
-
-            <Searchbar routeType='search' />
-
-            <div className='mt-14 flex flex-col gap-9'>
-                {result.users.length === 0 ? (
-                    <p className='no-result'>No Result</p>
-                ) : (
-                    <>
-                        {result.users.map((person) => (
-                            <UserCard
-                                key={person.id}
-                                id={person.id}
-                                name={person.name}
-                                username={person.username}
-                                imgUrl={person.image}
-                                personType='User'
-                            />
-                        ))}
-                    </>
-                )}
-            </div>
-
-            <Pagination
-                path='search'
-                pageNumber={searchParams?.page ? +searchParams.page : 1}
-                isNext={result.isNext}
-            />
-        </section>
-    );
+  return {
+    title: `Search users in You're Wrong`, //   name
+    description: "Search page of You're Wrong",
+    openGraph: {
+      type: "website",
+      url: `${host}search`, // Edit to  URL
+      title: `Search users in You're Wrong`,
+      description: "Search page of You're Wrong",
+      siteName: "You're Wrong", //  app name
+    },
+  };
 }
+
+const Page = async () => {
+  const user = await currentUser();
+
+  if (!user) return null;
+
+  const userInfo = await fetchUser(user.id);
+  if (!userInfo?.onboarded) return redirect("/onboarding");
+  // console.log(result);
+  return (
+    <section>
+      <h1 className="head-text mb-2 sm:mb-8">Search</h1>
+      <SearchResults />
+    </section>
+  );
+};
 
 export default Page;

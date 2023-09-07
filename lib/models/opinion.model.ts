@@ -1,42 +1,47 @@
-import mongoose from 'mongoose';
-
-const opinionSchema = new mongoose.Schema({
+import { Schema, models, model } from 'mongoose'
+const opinionSchema = new Schema({
     text: { type: String, required: true },
+    repost: { // source opinion._id 
+        type: Schema.Types.ObjectId,
+        ref: 'Opinion'
+    },
     author: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
+        required: true
     },
     community: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Community',
     },
-    giphyId: {
-        type: String
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
     parentId: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'Opinion'
     },
     children: [
         {
-            type: mongoose.Schema.Types.ObjectId,
+            type: Schema.Types.ObjectId,
             ref: 'Opinion'
         }
     ],
-    userAgrees: [
+    votes: [
         {
-            //type: String
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            type: Schema.Types.ObjectId,
+            ref: 'Vote'
         }
     ],
+    votePoints: { type: Number, default: 0 }
+}, { timestamps: true })
 
-});
+opinionSchema.pre('save', async (doc) => {
+    // console.log("saved " + this._id + " doc ")
+})
 
-const Opinion = mongoose.models.Opinion || mongoose.model('Opinion', opinionSchema);
+const Opinion = models.Opinion || model('Opinion', opinionSchema)
 
-export default Opinion;
+export default Opinion
+
+// Oirignal Opinion
+//     -> Opinion Disagreement 1
+//     -> Opinion Disagreement 2
+//         -> Opinion Disagreement 3
