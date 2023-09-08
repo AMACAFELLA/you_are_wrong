@@ -5,24 +5,20 @@ import { fetchUser } from "@/lib/actions/user.actions";
 import { AccountProfile } from "@/components/forms/AccountProfile";
 import { Metadata, ResolvingMetadata } from "next";
 
-export async function generateMetadata(
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  // fetch data
-  const parentData = await parent;
-  const host = parentData.metadataBase;
+export async function generateMetadata(): Promise<Metadata> {
   const user = await currentUser();
   if (!user) return {};
+
   const userInfo = await fetchUser(user.id);
   if (userInfo && userInfo.onboarded) return {};
 
   return {
-    title: `Edit Profile of (@${userInfo.username}) on You're Wrong`, //   name
+    title: `Edit Profile of (@${userInfo.username}) on You're Wrong`,
     description: userInfo.bio,
     icons: userInfo.profileImage, // Make sure the URL is absolute
     openGraph: {
       type: "website",
-      url: `${host}profile/${userInfo.id}`, // Edit to  URL
+      url: `/profile/${userInfo.id}`, // Updated URL
       title: `Edit Profile of (@${userInfo.username}) on You're Wrong`,
       description: userInfo.bio,
       images: [
@@ -33,11 +29,10 @@ export async function generateMetadata(
           alt: `Profile picture of ${userInfo.username}`,
         },
       ],
-      siteName: "You're Wrong", //  app name
+      siteName: "You're Wrong",
     },
   };
 }
-// Copy paste most of the code as it is from the /onboarding
 
 const Page = async () => {
   const user = await currentUser();

@@ -5,23 +5,39 @@ import { redirect } from "next/navigation";
 import React from "react";
 import ActivitiesComponent from "@/components/activity/page";
 
-import { Metadata, ResolvingMetadata } from "next";
-export async function generateMetadata(
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+import { Metadata } from "next"; // Updated import
+
+export async function generateMetadata(): Promise<Metadata> {
   // fetch data
-  const parentData = await parent;
-  const host = parentData.metadataBase;
+  const user = await currentUser();
+  if (!user) {
+    return {
+      title: "Activity in You're Wrong",
+      description: "Activity page of You're Wrong",
+      openGraph: {
+        type: "website",
+        url: `/activity`, // Updated URL
+        title: "Activity in You're Wrong",
+        description: "Activity page of You're Wrong",
+        siteName: "You're Wrong",
+      },
+    };
+  }
+
+  const userInfo = await fetchUser(user.id);
+  if (!userInfo?.onboarded) {
+    return redirect("/onboarding");
+  }
 
   return {
-    title: `Activity in You're Wrong`, //   name
+    title: "Activity in You're Wrong",
     description: "Activity page of You're Wrong",
     openGraph: {
       type: "website",
-      url: `${host}activity`, // Edit to  URL
-      title: `Activity in You're Wrong`,
+      url: `/activity`, // Updated URL
+      title: "Activity in You're Wrong",
       description: "Activity page of You're Wrong",
-      siteName: "You're Wrong", //  app name
+      siteName: "You're Wrong",
     },
   };
 }

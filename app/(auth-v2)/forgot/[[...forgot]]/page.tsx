@@ -1,8 +1,5 @@
 import React from "react";
 
-import GoogleButton from "@/components/auth/GoogleButton";
-import LinkedInButton from "@/components/auth/shared/LinkedInButton";
-import SignInForm from "@/components/auth/forms/SignInForm";
 import Logo from "@/components/shared/Logo";
 import ForgotForm from "@/components/auth/forms/ForgotForm";
 

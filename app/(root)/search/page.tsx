@@ -4,23 +4,23 @@ import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import React from "react";
 import SearchResults from "@/components/search/SearchResults";
-import { Metadata, ResolvingMetadata } from "next";
-export async function generateMetadata(
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  // fetch data
-  const parentData = await parent;
-  const host = parentData.metadataBase;
+import { Metadata } from "next";
+export async function generateMetadata(): Promise<Metadata> {
+  const user = await currentUser();
+  if (!user) return {};
+
+  const userInfo = await fetchUser(user.id);
+  if (!userInfo?.onboarded) return {};
 
   return {
-    title: `Search users in You're Wrong`, //   name
+    title: `Search users in You're Wrong`,
     description: "Search page of You're Wrong",
     openGraph: {
       type: "website",
-      url: `${host}search`, // Edit to  URL
+      url: `/search`, // Updated URL
       title: `Search users in You're Wrong`,
       description: "Search page of You're Wrong",
-      siteName: "You're Wrong", //  app name
+      siteName: "You're Wrong",
     },
   };
 }

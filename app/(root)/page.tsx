@@ -5,23 +5,36 @@ import FilterComponent from "@/components/shared/FilterComponent";
 import { fetchOpinions } from "@/lib/actions/opinion.actions";
 import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
-import { Metadata, ResolvingMetadata } from "next";
-export async function generateMetadata(
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  // fetch data
-  const parentData = await parent;
-  const host = parentData.metadataBase;
+import { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const user = await currentUser();
+  if (!user) {
+    return {
+      title: "You're Wrong",
+      description: "Home page of You're Wrong",
+      openGraph: {
+        type: "website",
+        url: `/`, // Updated URL
+        title: "You're Wrong",
+        description: "Home page of You're Wrong",
+        siteName: "You're Wrong",
+      },
+    };
+  }
+
+  const userInfo = await fetchUser(user.id);
+  // if (!userInfo?.onboarded) return redirect("/onboarding");
 
   return {
-    title: `You're Wrong`, //   name
+    title: "You're Wrong",
     description: "Home page of You're Wrong",
     openGraph: {
       type: "website",
-      url: `${host}`, // Edit to  URL
-      title: `You're Wrong`,
+      url: `/`, // Updated URL
+      title: "You're Wrong",
       description: "Home page of You're Wrong",
-      siteName: "You're Wrong", //  app name
+      siteName: "You're Wrong",
     },
   };
 }

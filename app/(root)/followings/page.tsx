@@ -6,27 +6,43 @@ import { fetchFollowingsOpinions } from "@/lib/actions/opinion.actions";
 import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
 
-import { Metadata, ResolvingMetadata } from "next";
-export async function generateMetadata(
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  // fetch data
-  const parentData = await parent;
-  const host = parentData.metadataBase;
+export async function generateMetadata(): Promise<Metadata> {
+  const user = await currentUser();
+  if (!user) {
+    return {
+      title: "You're Wrong Following",
+      description: "Following page of You're Wrong",
+      openGraph: {
+        type: "website",
+        url: `/followings`, // Updated URL
+        title: "You're Wrong Following",
+        description: "Following page of You're Wrong",
+        siteName: "You're Wrong",
+      },
+    };
+  }
+
+  const userInfo = await fetchUser(user.id);
+  if (!userInfo?.onboarded) {
+    return redirect("/onboarding");
+  }
 
   return {
-    title: `You're Wrong Following`, //   name
+    title: "You're Wrong Following",
     description: "Following page of You're Wrong",
     openGraph: {
       type: "website",
-      url: `${host}/followings`, // Edit to  URL
-      title: `You're Wrong Following`,
+      url: `/followings`, // Updated URL
+      title: "You're Wrong Following",
       description: "Following page of You're Wrong",
-      siteName: "You're Wrong", //  app name
+      siteName: "You're Wrong",
     },
   };
 }
+
+
 const Home = async (params: {
   params: { [key: string]: string | string[] | undefined };
   searchParams?: {
