@@ -17,20 +17,20 @@ export async function generateMetadata(): Promise<Metadata> {
   if (userInfo && userInfo.onboarded) return {};
 
   return {
-    title: `Onboarding of (@${userInfo.username}) on You're Wrong`,
-    description: userInfo.bio,
-    icons: userInfo.profileImage,
+    title: `Onboarding of (@${user?.username}) on You're Wrong`,
+    description: userInfo?.bio,
+    icons: userInfo?.profileImage,
     openGraph: {
       type: "website",
-      url: `/profile/${userInfo.id}`,
-      title: `Onboarding of (@${userInfo.username}) on You're Wrong`,
-      description: userInfo.bio,
+      url: `/profile/${userInfo?.id}`,
+      title: `Onboarding of (@${user?.username}) on You're Wrong`,
+      description: userInfo?.bio,
       images: [
         {
-          url: userInfo.image,
+          url: userInfo?.image,
           width: 200,
           height: 200,
-          alt: `Profile picture of ${userInfo.username}`,
+          alt: `Profile picture of ${userInfo?.username}`,
         },
       ],
       siteName: "You're Wrong",
