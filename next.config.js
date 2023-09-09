@@ -42,6 +42,8 @@ const nextConfig = {
     },
     webpack: (config) => {
         config.resolve.alias["@"] = path.resolve(__dirname);
+        config.resolve.alias["components"] = path.resolve(__dirname, "./components"); // Adjust the path as per your project structure
+        config.resolve.alias["lib"] = path.resolve(__dirname, "./lib"); // Adjust the path as per your project structure
         return config;
     },
 };

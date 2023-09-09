@@ -26,6 +26,6 @@
       ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/types/app/(auth)/sign-up/page.ts", ".next/types/app/(auth)/sign-in/page.tsx", "./shared/**/*"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/types/app/(auth)/sign-up/page.ts", ".next/types/app/(auth)/sign-in/page.tsx", "./shared/**/*", "components/shared/TopBar.tsx", "components/shared/BottomBar.tsx"],
   "exclude": ["node_modules"]
 }
