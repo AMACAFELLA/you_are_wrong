@@ -1,38 +1,66 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# You're Wrong
 
-## Getting Started
+You're Wrong is a social media web application built with Next.js, Tailwind CSS, and MongoDB. Users can post opinions, disagree with other users' opinions, and more.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+- User authentication with Clerk
+- Create/update user profile
+- Post text opinions
+- Search for gifs with Giphy API to embed in opinions
+- View opinion feed
+- Reply to opinions with disagreements
+- Delete own opinions
+- User activity feed
+- Search for communities
+- Search for users
+- Webhooks with Clerk to sync data
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Code Overview
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The app is built with:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- Next.js - For server-side rendering and API routes
+- Tailwind CSS - For styling
+- MongoDB - For storing user profiles, opinions, communities, etc.
+- Mongoose - For interacting with MongoDB
+- Clerk - For user authentication and management
+- Giphy API - For embedding gifs
 
-## Learn More
+The main models are:
 
-To learn more about Next.js, take a look at the following resources:
+- User - Stores user profile information like name, username, bio, etc.
+- Opinion - Stores posted opinions text, author, community, replies, etc.
+- Community - Stores community information like name, members, etc.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The main pages are:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- Homepage - Shows opinion feed
+- Profile - Shows user's opinions and info
+- Post opinion - Create a new opinion
+- Activity - Shows recent replies to user's opinions
+- Communities - Browse and search communities
+- Community profile - View community info and members
+- Search - Search for users
 
-## Deploy on Vercel
+Authentication uses Clerk with custom pages for signup and login.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The UI uses React components from Radix UI like Tabs, Menu, Toast, etc.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## Setup
 
-# you_are_wrong
- You're Wrong is a thread/twitter like app where instead of agreeing on points the aim is to disagree with the original post and whoever gets the most dislikes is awarded "You're the Worst  Medal". This is soley for entertainment purposes only and is not to be considered to take what users say on the app to be serious.
+1. Clone the repo
+2. Run `npm install`
+3. Set up environment variables
+4. Start MongoDB server
+5. Run `npm run dev`
 
+## Future Improvements
+
+Some ideas for future improvements:
+
+- Notifications for replies, new followers, etc.
+- Improved search with filters
+- User following
+- Admin dashboard to moderate content
+- Improve accessibility
