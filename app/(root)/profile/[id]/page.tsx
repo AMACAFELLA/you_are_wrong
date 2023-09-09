@@ -32,20 +32,20 @@ export async function generateMetadata(
   const userInfo = await fetchUserAccount(params.params.id, current_user._id);
 
   return {
-    title: `${userInfo.name} (@${userInfo.username}) on You're Wrong`, //   name
-    description: userInfo.bio,
-    icons: userInfo.profileImage, // Make sure the URL is absolute
+    title: `${userInfo?.name} (@${userInfo?.username}) on You're Wrong`, //   name
+    description: userInfo?.bio,
+    icons: userInfo?.profileImage, // Make sure the URL is absolute
     openGraph: {
       type: "website",
-      url: `${host}profile/${userInfo.id}`, // Edit to  URL
-      title: `${userInfo.name} (@${userInfo.username}) on You're Wrong`,
-      description: userInfo.bio,
+      url: `${host}profile/${userInfo?.id}`, // Edit to  URL
+      title: `${userInfo?.name} (@${userInfo?.username}) on You're Wrong`,
+      description: userInfo?.bio,
       images: [
         {
-          url: userInfo.image, // Make sure the URL is absolute
+          url: userInfo?.image, // Make sure the URL is absolute
           width: 200,
           height: 200,
-          alt: `Profile picture of ${userInfo.username}`,
+          alt: `Profile picture of ${userInfo?.username}`,
         },
       ],
       siteName: "You're Wrong", //  app name

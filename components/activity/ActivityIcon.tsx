@@ -46,7 +46,7 @@ const ActivityIcon = ({
       {type === "reply" && (
         <Image
           src="/assets/reply_white.svg"
-          alt="reply"
+          alt="disagree"
           width="22"
           height="22"
           className="cursor-pointer object-contain scale-100"

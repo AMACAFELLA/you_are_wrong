@@ -35,7 +35,7 @@ export const sidebarLinks = [
 
 export const profileTabs: TabTypes = [
     { value: "opinions", label: "Opinions", icon: "/assets/reply.svg" },
-    { value: "replies", label: "Replies", icon: "/assets/members.svg" },
+    { value: "replies", label: "Disagreements", icon: "/assets/members.svg" },
     { value: "mentioned", label: "Mentioned", icon: "/assets/atsign.svg" },
 ];
 

@@ -70,7 +70,7 @@ const OpinionCard = ({
             className="w-fit text-light-3 hover-to-secondary"
           >
             <h5 className="text-subtle-medium">
-              Reposted From @
+              Reposted from @
               {
                 // @ts-ignore
                 repost.author.username
@@ -90,7 +90,7 @@ const OpinionCard = ({
         <div className="flex gap-1 justify-start items-center">
           <Image
             src="/assets/reply.svg"
-            alt="reply"
+            alt="disagree"
             width="18"
             height="18"
             className="object-contain"
@@ -104,11 +104,11 @@ const OpinionCard = ({
             className="w-fit text-light-3 hover-to-secondary"
           >
             <h5 className="text-subtle-medium">
-              Replied To @
+              Disagreed to @
               {
                 // @ts-ignore
                 parentOpinion.author.username
-              }
+              } opinion
             </h5>
           </Link>
         </div>
@@ -186,7 +186,7 @@ const OpinionCard = ({
                 >
                   <Image
                     src="/assets/reply.svg"
-                    alt="reply"
+                    alt="disagree"
                     width="28"
                     height="28"
                     className="cursor-pointer object-contain my-auto transition-all duration-150 ease-in-out hover:scale-110"
@@ -248,7 +248,7 @@ const OpinionCard = ({
             className="text-light-3 hover-to-secondary"
           >
             <p className="mt-1 text-subtle-medium">
-              {disagreements.length} repl{disagreements.length > 1 ? "ies" : "y"}
+              {disagreements.length} disagree{disagreements.length > 1 ? "ments" : "ment"}
             </p>
           </Link>
         </div>

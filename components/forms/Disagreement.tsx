@@ -137,7 +137,7 @@ const Disagreement = ({
             disabled={loading}
             className="disagreement-form_btn bg-primary-500 flex justify-center items-center"
           >
-            {loading ? <Spinner color="#FFFFFF" /> : "Reply"}
+            {loading ? <Spinner color="#FFFFFF" /> : "Disagree"}
           </Button>
         </form>
       </Form>
