@@ -21,11 +21,11 @@ export const sidebarLinks = [
         route: "/activity",
         label: "Activity",
     },
-    {
-        imgURL: "/assets/community.svg",
-        route: "/communities",
-        label: "Communities",
-    },
+    // {
+    //     imgURL: "/assets/community.svg",
+    //     route: "/communities",
+    //     label: "Communities",
+    // },
     {
         imgURL: "/assets/user.svg",
         route: "/profile",
