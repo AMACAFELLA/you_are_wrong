@@ -8,7 +8,7 @@
     @apply flex min-h-screen flex-1 flex-col items-center bg-dark-1 px-2 pb-10 pt-16 mt-3 sm:pt-24 max-md:pb-32 sm:px-10;
   }
   .gradient-primary {
-    @apply bg-gradient-to-t from-[#d77cff] via-[#a76cff] to-[#876cff]
+    @apply bg-gradient-to-t from-[#877eff] via-[#877eff] to-[#877eff]
   }
   .header-gradient {
     @apply text-transparent bg-clip-text gradient-primary
