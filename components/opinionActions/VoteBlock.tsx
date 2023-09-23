@@ -69,8 +69,8 @@ const VoteBlock = ({ opinionId, voterId, myVote, votes }: VoteProps) => {
       <Image
         src={`/assets/arrow_up${voteState === "up" ? "_filled" : ""}.svg`}
         alt={`up_vote${voteState === "up" ? "_filled" : ""}`}
-        width="17"
-        height="17"
+        width="24"
+        height="24"
         className="cursor-pointer w-full h-auto object-contain transition-all duration-150 ease-in-out hover:scale-110"
       />
     ),
@@ -82,8 +82,8 @@ const VoteBlock = ({ opinionId, voterId, myVote, votes }: VoteProps) => {
       <Image
         src={`/assets/arrow_down${voteState === "down" ? "_filled" : ""}.svg`}
         alt={`down_vote${voteState === "down" ? "_filled" : ""}`}
-        width="17"
-        height="17"
+        width="24"
+        height="24"
         className="cursor-pointer w-full h-auto object-contain transition-all duration-150 ease-in-out hover:scale-110"
       />
     ),
