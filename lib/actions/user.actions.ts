@@ -255,7 +255,7 @@ const getActivity = async ({ pageNumber = 1, pageSize = 10, currentUserId }: Pag
 
                     return acc.concat({
                         type: "vote",
-                        message: `${item.type.toString().toLowerCase()}voted your opinion`,
+                        message: `${item.type.toString().toLowerCase()}agreed to your opinion`,
                         subject: item.voter,
                         link: "/opinion/" + item.opinion._id,
                         createdAt: item.createdAt
