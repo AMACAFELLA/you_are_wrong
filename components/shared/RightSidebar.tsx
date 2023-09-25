@@ -30,7 +30,15 @@ const RightSidebar = () => {
       // cleanups
     };
   }, []);
-
+  //Randomize the order of the suggested users
+  function shuffleArray(array: any) {
+    const shuffledArray = [...array];
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    }
+    return shuffledArray;
+  }
   return (
     <section className="custom-scrollbar rightsidebar overflow-hidden">
       <div className="flex flex-1 flex-col justify-start w-72 overflow-hidden">
@@ -48,7 +56,7 @@ const RightSidebar = () => {
                   <>
                     {
                       // @ts-ignore
-                      users.map((person, index) => (
+                        shuffleArray(users).slice(0, 3).map((person, index) => (
                         <UserCard
                           key={person.id + "/" + index}
                           user={person}
