@@ -39,10 +39,18 @@ const SidebarLinks = ({
         }
         const res = await fetch(`/api/user/image`, {
           ...(params as RequestInit),
-        }).then((res) => res.json());
-
-        setProfileImage(res.image);
-        setProfileColor(res.color);
+        });
+        if (res.ok) {
+          const data = await res.text();
+          if (data) {
+            const json = JSON.parse(data);
+            setProfileImage(json.image);
+            setProfileColor(json.color);
+          }
+        } else {
+          // handle error
+          
+        }
       }
     }
   };
