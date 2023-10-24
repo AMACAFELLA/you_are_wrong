@@ -13,9 +13,14 @@ const TopBar = async ({ withLogout = true }: { withLogout?: boolean }) => {
         <div className="block md:hidden">
           {withLogout ? <LogoutComponent /> : <></>}
         </div>
+        <a href="https://www.paypal.com/donate/?hosted_button_id=DJBKCVQ3KZRYY" target="_blank" rel="noopener noreferrer" className="header-gradient font-bold">
+          Donate
+        </a>
       </div>
     </nav>
   );
 };
 
 export default TopBar;
+
+

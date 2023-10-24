@@ -1,5 +1,7 @@
 import LogoutComponent from "./LogoutComponent";
+import LoginComponent from "./LoginComponent";
 import SidebarLinks from "./SidebarLinks";
+import { useAuth } from '@clerk/nextjs';
 
 const LeftSidebar = () => {
   return (
@@ -9,6 +11,11 @@ const LeftSidebar = () => {
           type="leftsidebar_link"
           text_class="text-light-1 max-lg:hidden"
         />
+      </div>
+      <div className="mt-10 px-4">
+        <LoginComponent styles="gap-4 p-4">
+          <p className="text-light-2 max-lg:hidden gap-4">Login</p>
+        </LoginComponent>
       </div>
       <div className="mt-10 px-4">
         <LogoutComponent styles="gap-4 p-4">
