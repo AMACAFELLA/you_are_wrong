@@ -2,8 +2,8 @@ import { ClerkProvider } from "@clerk/nextjs/app-beta";
 import "../globals.css";
 import type { Metadata } from "next";
 // import { Inter } from "next/font/google";
-import TopBar from '@/components/shared/TopBar'
-import BottomBar from '@/components/shared/BottomBar'
+import TopBar from '@/components/shared/Topbar'
+import BottomBar from '@/components/shared/Bottombar'
 import LeftSidebar from "@/components/shared/LeftSidebar";
 import RightSidebar from "@/components/shared/RightSidebar";
 // import { ThemeProvider } from "@/components/theme/theme.-provider";
